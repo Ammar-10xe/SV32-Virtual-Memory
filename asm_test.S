@@ -1,6 +1,5 @@
 .include "func_pte.S"
 .include "trap_handler.S"
-#.include "func1.s"
 .text
 .global _start
 _start:
