@@ -8,22 +8,22 @@ _start:
     
     la   t1,      pgtb_l0
     mv   a1,      t1
-    mv   a0,      t1
+    li   a0,      0xA0002000
     li   a2,      0x001
     li   a3,      0x1
     jal  func_pte
 
-    la   t1,      code
+    la   t1,      code 
     mv   a1,      t1
-    mv   a0,      t1
+    li   a0,      0xA0000100
     li   a2,      0x0CF
     li   a3,      0x0
     jal  func_pte
 
     la   t1,      arr
     mv   a1,      t1
-    mv   a0,      t1
-    li   a2,      0x0CF
+    li   a0,      0xA0004000
+    li   a2,      0x0C3
     li   a3,      0x0
     jal  func_pte
 
@@ -35,16 +35,16 @@ _start:
 
     la   t2,      trap_handler
     csrw mtvec,   t2
-    la   t2,      code
+    li   t2,      0xA0000100
     csrw mepc,    t2
     li   t2,      0x1800
     csrc mstatus, t2
-    li   t2,      0x00800
+    li   t2,      0xC0800
     csrs mstatus, t2
     mret
 
 code:
-    la   t5,      arr
+    li   t5,      0xA0004000
     lw   t6,      0(t5)
 exit:
     la t0, tohost
