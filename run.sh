@@ -18,8 +18,10 @@ riscv32-unknown-elf-gcc -march=rv32gc -mabi=ilp32 -nostdlib -T "$linker_file" "$
 echo "Compilation completed."
 
 #step 3: Generate the log File and also add a timeout to avoid the infinite generation of log file.
-echo "Log file Generation Started"
+echo "Log file Generation Started Sail"
 timeout 2s riscv_sim_RV32 test.elf > sail.log
+echo "Log file Generation Started Spike"
+spike -d --isa=rv32gc test.elf 1>spike.out 2>spike.log
 exit_code=$?
 
 if [ $exit_code -eq 124 ]; then
