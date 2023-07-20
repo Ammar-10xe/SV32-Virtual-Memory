@@ -19,7 +19,7 @@ echo "Compilation completed."
 
 #step 3: Generate the log File and also add a timeout to avoid the infinite generation of log file.
 echo "Log file Generation Started"
-timeout 5s riscv_sim_RV32 test.elf > sail.log
+timeout 2s riscv_sim_RV32 test.elf > sail.log
 exit_code=$?
 
 if [ $exit_code -eq 124 ]; then
