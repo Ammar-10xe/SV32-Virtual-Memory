@@ -1,3 +1,56 @@
-*.log
+# OS-specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Object files
+*.o
+*.ko
+*.obj
 *.elf
+*.log
 *.out
+test.elf
+spike.log
+sail.log
+sail.out
+spike.out
+
+# Executables
+*.exe
+
+# Editor-specific files
+*~
+*.swp
+*.swo
+*.bak
+*.backup
+.*.swp
+.*.swo
+.*.bak
+.*.backup
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+
+
+# for ModelSim 
+*.qpg
+*.qdb
+*.qtl
+
+

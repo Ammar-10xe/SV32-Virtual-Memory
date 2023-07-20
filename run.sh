@@ -65,4 +65,3 @@ if [ "$run_spike" = true ]; then
 
   echo "Log File Generation for Spike Completed"
 fi
-
