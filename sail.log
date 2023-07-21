@@ -377,9 +377,9 @@ mem[X,0x800000F6] -> 0x8003
 [80] [M]: 0x800000F4 (0x80038393) addi t2, t2, 2048
 x7 <- 0x000C0800
 
-mem[X,0x800000F8] -> 0xA073
-mem[X,0x800000FA] -> 0x3003
-[81] [M]: 0x800000F8 (0x3003A073) csrrs zero, mstatus, t2
+mem[X,0x80000124] -> 0xA073
+mem[X,0x80000126] -> 0x3003
+[83] [M]: 0x80000124 (0x3003A073) csrrs zero, mstatus, t2
 CSR mstatus -> 0x00000000
 CSR mstatus <- 0x000C0800 (input: 0x000C0800)
 
