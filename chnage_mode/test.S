@@ -37,11 +37,10 @@ user:
     # ecall
     
 
-write_tohost:
-
-    li x1, 1
-    sw x1, tohost, t5
 exit:
+    la t0, tohost
+    li t1, 1
+    sw t1, 0(t0)
     j exit
 
 .align 4; .global tohost;   tohost:   .dword 0;
