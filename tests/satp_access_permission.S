@@ -55,6 +55,8 @@ change_mode_user: //chnages mode from S to U
 
 user_mode:
 
+
+
     li t1, 0x0000ffff
     li t2, 0xffffffff
     li t3, 0x12345678
