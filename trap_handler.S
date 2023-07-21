@@ -18,6 +18,10 @@ trap_handler:
     j     trap_handler_end
 
 instruction_access_fault:
+   li t5 , 0x444
+   li t6 ,0x555
+   beq t4,t5,Test_handel_1
+   beq t4,t6,Test_handel_2
     j exit
 
 illegal_instruction_fault:
@@ -40,3 +44,18 @@ store_page_fault:
 
 trap_handler_end:
     mret
+
+Test_handel_1:
+la t5,Test_case_2
+csrw mepc , t5
+li t6,0x1800
+csrw mstatus,t6
+mret
+
+Test_handel_2:
+la t5,Test_case_3
+csrw mepc , t5
+li t6,0x1800
+csrw mstatus,t6
+mret
+
