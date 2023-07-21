@@ -106,6 +106,8 @@
 #define CHECK_SV32_MODE(REG)                                ;\
     GET_SATP_MODE(REG)                                      ;
 
+                                    ;    
+
 #define GET_SATP_MODE(DST_REG)                              ;\
     READ_CSR(satp, DST_REG)                                 ;\
     srli DST_REG, DST_REG, 31                               ;\

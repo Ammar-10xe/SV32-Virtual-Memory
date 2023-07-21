@@ -1,3 +1,4 @@
+#!/bin/bash
 ###################################################################
 #  _____                _____           _       _                 #
 # |  __ \              / ____|         (_)     | |                #
@@ -11,7 +12,6 @@
 #Author:       Compliance team @ 10xengineers                     #
 #Description:  For automation of tests                            #
 ###################################################################
-#!/bin/bash
 #This is a script for generating the tests logs and also for verification of the results
 
 # Default values for the flags
