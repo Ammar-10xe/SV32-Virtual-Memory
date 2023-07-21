@@ -17,6 +17,7 @@ machine_mode:
     csrrc s2, satp, t2
     li t3,0xbeefdead
     csrrs s3,satp,t3
+    ret
 
     # # Switch to supervisor mode
     # la a0, supervisor_mode
@@ -24,18 +25,6 @@ machine_mode:
     # li a0, 0x1
     # csrw mstatus, a0
     # mret
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
