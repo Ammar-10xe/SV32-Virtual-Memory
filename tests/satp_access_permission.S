@@ -7,19 +7,40 @@ _start:
 
     la a0, machine_mode
     jalr a0
+    
+    la a0, supervisor_mode
+    jalr a0
+    
     j exit
 
 machine_mode:
     # Save machine mode satp
     li t1, 0xdeadbeef
     csrrw s1, satp, t1
-    li t2, 0x80000000
+    li t2, 0xf0000000
     csrrc s2, satp, t2
     li t3,0xbeefdead
     csrrs s3,satp,t3
+    
     ret
 
-    # # Switch to supervisor mode
+supervisor_mode:
+    
+    li      t0, 0x1800
+    csrc    mstatus, t0
+    li      t1, 0x800
+    csrs    mstatus, t1
+    
+    li t2, 0xdeadbeef
+    csrrw s1, satp, t2
+    li t3, 0xf0000000
+    csrrc s2, satp, t3
+    li t4,0xbeefdead
+    csrrs s3,satp,t4
+
+    ret
+
+    
     # la a0, supervisor_mode
     # csrw mepc, a0
     # li a0, 0x1
