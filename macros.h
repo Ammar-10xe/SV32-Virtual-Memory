@@ -9,108 +9,99 @@
 #define LREG lw
 #define MRET mret
 
-#define SET_VALID 0x001
-#define READ_PERMISSION 0x002
-#define WRITE_PERMISSION 0x004
-#define EXEC_PERMISSION 0x008
-#define SET_USER 0x010
-#define SET_GLOBAL 0x020
-#define SET_ACCESS 0x040
-#define SET_DIRTY 0x080
-
 #define FLUSH 0x1
 #define NO_FLUSH 0x0
 
 #define SET_RWX_PERMISSION(REG, ZERO)                       ;\
     .if(ZERO==FLUSH)                                        ;\
-        SET_READ_PERMISSION(REG, FLUSH)                     ;\
+        SET_PTE_R(REG, FLUSH)                               ;\
     .else                                                   ;\
-        SET_READ_PERMISSION(REG, NO_FLUSH)                  ;\
+        SET_PTE_R(REG, NO_FLUSH)                            ;\
     .endif                                                  ;\
-    SET_WRITE_PERMISSION(REG, NO_FLUSH)                     ;\
-    SET_EXEC_PERMISSION(REG, NO_FLUSH)                      ;
+    SET_PTE_W(REG, NO_FLUSH)                                ;\
+    SET_PTE_X(REG, NO_FLUSH)                                ;
 
 #define SET_RWXV_BITS(REG, ZERO)                            ;\
     .if(ZERO==FLUSH)                                        ;\
-        SET_READ_PERMISSION(REG, FLUSH)                     ;\
+        SET_PTE_R(REG, FLUSH)                               ;\
     .else                                                   ;\
-        SET_READ_PERMISSION(REG, NO_FLUSH)                  ;\
+        SET_PTE_R(REG, NO_FLUSH)                            ;\
     .endif                                                  ;\
-    SET_WRITE_PERMISSION(REG, NO_FLUSH)                     ;\
-    SET_EXEC_PERMISSION(REG, NO_FLUSH)                      ;\
-    SET_VALID_BIT(REG, NO_FLUSH)                            ;
+    SET_PTE_W(REG, NO_FLUSH)                                ;\
+    SET_PTE_X(REG, NO_FLUSH)                                ;\
+    SET_PTE_V(REG, NO_FLUSH)                                ;
 
 #define SET_RW_BITS(REG, ZERO)                              ;\
     .if(ZERO==FLUSH)                                        ;\
-        SET_READ_PERMISSION(REG, FLUSH)                     ;\
+        SET_PTE_R(REG, FLUSH)                               ;\
     .else                                                   ;\
-        SET_READ_PERMISSION(REG, NO_FLUSH)                  ;\
+        SET_PTE_R(REG, NO_FLUSH)                            ;\
     .endif                                                  ;\
-    SET_WRITE_PERMISSION(REG, NO_FLUSH)                     ;\
+    SET_PTE_W(REG, NO_FLUSH)                                ;\
 
 #define SET_RV_BITS(REG, ZERO)                              ;\
     .if(ZERO==FLUSH)                                        ;\
-        SET_READ_PERMISSION(REG, FLUSH)                     ;\
+        SET_PTE_R(REG, FLUSH)                               ;\
     .else                                                   ;\
-        SET_READ_PERMISSION(REG, NO_FLUSH)                  ;\
+        SET_PTE_R(REG, NO_FLUSH)                            ;\
     .endif                                                  ;\
-    SET_VALID_BIT(REG, NO_FLUSH)                            ;\
+    SET_PTE_V(REG, NO_FLUSH)                                ;\
 
 #define SET_WV_BITS(REG, ZERO)                              ;\
     .if(ZERO==FLUSH)                                        ;\
-        SET_WRITE_PERMISSION(REG, FLUSH)                    ;\
+        SET_PTE_W(REG, FLUSH)                               ;\
     .else                                                   ;\
-        SET_WRITE_PERMISSION(REG, NO_FLUSH)                 ;\
+        SET_PTE_W(REG, NO_FLUSH)                            ;\
     .endif                                                  ;\
-    SET_VALID_BIT(REG, NO_FLUSH)                            ;\
+    SET_PTE_V(REG, NO_FLUSH)                                ;\
 
-#define SET_READ_PERMISSION(REG, ZERO)                      ;\
+#define SET_PTE_R(REG, ZERO)                                ;\
     .if(ZERO==FLUSH)                                        ;\
         li REG, 0                                           ;\
     .endif                                                  ;\
-    ori REG, REG, READ_PERMISSION                           ;
+    ori REG, REG, PTE_R                                     ;
 
-#define SET_WRITE_PERMISSION(REG, ZERO)                     ;\
+#define SET_PTE_W(REG, ZERO)                                ;\
     .if(ZERO==FLUSH)                                        ;\
         li REG, 0                                           ;\
     .endif                                                  ;\
-    ori REG, REG, WRITE_PERMISSION                          ;
+    ori REG, REG, PTE_W                                     ;
 
-#define SET_EXEC_PERMISSION(REG, ZERO)                      ;\
+#define SET_PTE_X(REG, ZERO)                                ;\
     .if(ZERO==FLUSH)                                        ;\
         li REG, 0                                           ;\
     .endif                                                  ;\
-    ori REG, REG, EXEC_PERMISSION                           ;
+    ori REG, REG, PTE_X                                     ;
 
-#define SET_USER_BIT(REG, ZERO)                             ;\
+#define SET_PTE_U(REG, ZERO)                                ;\
     .if(ZERO==FLUSH)                                        ;\
         li REG, 0                                           ;\
     .endif                                                  ;\
-    ori REG, REG, SET_USER                                  ;
+    ori REG, REG, PTE_U                                     ;
 
-#define SET_GLOBAL_BIT(REG, ZERO)                           ;\
+#define SET_PTE_G(REG, ZERO)                                ;\
     .if(ZERO==FLUSH)                                        ;\
         li REG, 0                                           ;\
     .endif                                                  ;\
-    ori REG, REG, SET_GLOBAL                                ;
+    ori REG, REG, PTE_G                                     ;
 
-#define SET_ACCESS_BIT(REG, ZERO)                           ;\
+#define SET_PTE_A(REG, ZERO)                                ;\
     .if(ZERO==FLUSH)                                        ;\
         li REG, 0                                           ;\
     .endif                                                  ;\
-    ori REG, REG, SET_ACCESS                                ;
+    ori REG, REG, PTE_A                                     ;
 
-#define SET_DIRTY_BIT(REG, ZERO)                            ;\
+#define SET_PTE_D(REG, ZERO)                                ;\
     .if(ZERO==FLUSH)                                        ;\
         li REG, 0                                           ;\
     .endif                                                  ;\
-    ori REG, REG, SET_DIRTY                                 ;
+    ori REG, REG, PTE_D                                     ;
 
-#define SET_VALID_BIT(REG, ZERO)                            ;\
+#define SET_PTE_V(REG, ZERO)                                ;\
     .if(ZERO==FLUSH)                                        ;\
         li REG, 0                                           ;\
     .endif                                                  ;\
-    ori REG, REG, SET_VALID                                 ;
+    ori REG, REG, PTE_V                                     ;
 
 #define CHECK_SV32_MODE(REG)                                ;\
     GET_SATP_MODE(REG)                                      ;
