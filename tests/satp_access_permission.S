@@ -20,11 +20,9 @@ machine_mode:
     csrrc s2, satp, t2
     csrrw s1, satp, t3
     // If SATP is accessible chnagae mode to S
-    la   t4, change_mode_supervisor
-    mv   t4, a1
-    j    a1
-    
-    
+    j change_mode_supervisor
+
+
 change_mode_supervisor: // Chnages mode from M to S
 
     li      t0, 0x1800
@@ -44,9 +42,7 @@ supervisor_mode:
     csrrc s2, satp, t2
     csrrw s1, satp, t3
     // If SATP is accessible chnagae mode to S
-    la   a1, change_mode_user
-    j    a1
-
+    j change_mode_user
 
 
 change_mode_user: //chnages mode from S to U
