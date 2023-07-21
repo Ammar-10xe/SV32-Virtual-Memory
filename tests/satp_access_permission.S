@@ -32,8 +32,12 @@ change_mode_supervisor: // Chnages mode from M to S
     mret  
     
 supervisor_mode:
-    beq mstatus, 0x20
+#     li t1, 0x80
+#     csrr t2,mcause
+#     beq t1, t2, check_Sdone 
+#     j exit   
 
+# check_Sdone:
     li t1, 0x0000ffff
     li t2, 0xffffffff
     li t3, 0x12345678
@@ -52,7 +56,11 @@ change_mode_user: //chnages mode from S to U
 
 
 user_mode:
+#     li t1, 0x20
+#     beq mstatus, t1, check_Udone 
+#     j exit
 
+# check_Udone:
     li t1, 0x0000ffff
     li t2, 0xffffffff
     li t3, 0x12345678
