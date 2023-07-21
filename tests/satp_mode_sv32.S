@@ -6,27 +6,27 @@
 _start:
 
     
-    la t1, pgtb_l0
-    mv a1, t1
-
+    la a1, pgtb_l0
     GEN_VA(a1, a0, 0x280, 0x002)
-    li a2, 0x001
+    SET_VALID_BIT(a2, FLUSH)
 
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)
 
-    la t1, code 
-    mv   a1,      t1
+    la a1, code
     GEN_VA(a1, a0, 0x280, 0x000)
     mv t3, a0
-    li a2, 0x0CF
+    SET_RWXV_BITS(a2, FLUSH)
+    SET_ACCESS_BIT(a2, NO_FLUSH)
+    SET_DIRTY_BIT(a2, NO_FLUSH)
 
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
 
-    la t1, arr
-    mv a1, t1
+    la a1, arr
     GEN_VA(a1, a0, 0x280, 0x004)
     mv t4, a0
-    li a2, 0x0C3
+    SET_RV_BITS(a2, FLUSH)
+    SET_ACCESS_BIT(a2, NO_FLUSH)
+    SET_DIRTY_BIT(a2, NO_FLUSH)
  
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
     SATP_SETUP_SV32 
