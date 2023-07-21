@@ -3,9 +3,18 @@
 #define pgtb_le1 0x80001000
 #define pgtb_le0 0x80002000
 
+#define SATP_SV32_MODE_VAL 0x01
+
 #define SREG sw
 #define LREG lw
 #define MRET mret
+
+#define CHECK_SV32_MODE(REG)                               ;\
+    GET_SATP_MODE(REG)                                     ;
+
+#define GET_SATP_MODE(DST_REG)                             ;\
+    READ_CSR(satp, DST_REG)                                ;\
+    srli DST_REG, DST_REG, 31                              ;\
 
 #define WRITE_CSR(CSR_REG, SRC_REG)                        ;\
     csrw CSR_REG, SRC_REG                                  ;
