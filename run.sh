@@ -1,4 +1,17 @@
 #!/bin/bash
+###################################################################
+#  _____                _____           _       _                 #
+# |  __ \              / ____|         (_)     | |                #
+# | |__) |   _ _ __   | (___   ___ _ __ _ _ __ | |_               #
+# |  _  / | | | '_ \   \___ \ / __| '__| | '_ \| __|              #
+# | | \ \ |_| | | | |  ____) | (__| |  | | |_) | |_               #
+# |_|  \_\__,_|_| |_| |_____/ \___|_|  |_| .__/ \__|              #
+#                                        | |                      #
+#                                        |_|                      #
+#                                                                 #
+#Author:       Compliance team @ 10xengineers                     #
+#Description:  For automation of tests                            #
+###################################################################
 #This is a script for generating the tests logs and also for verification of the results
 
 # Default values for the flags

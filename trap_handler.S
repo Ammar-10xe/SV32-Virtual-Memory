@@ -1,8 +1,10 @@
 trap_handler:
 
-    csrr  t0, mcause
+    csrr  t0,    mcause
     li    t1,   1
     beq   t0,   t1, instruction_access_fault
+    li    t1,   2
+    beq   t0,   t1, illegal_instruction_fault
     li    t1,   5
     beq   t0,   t1, load_access_fault
     li    t1,   7
@@ -20,6 +22,9 @@ instruction_access_fault:
    li t6 ,0x555
    beq t4,t5,Test_handel_1
    beq t4,t6,Test_handel_2
+    j exit
+
+illegal_instruction_fault:
     j exit
 
 load_access_fault:
