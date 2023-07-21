@@ -46,13 +46,13 @@ asm_test_file="$2"
 
 # Step 4: Compile the file
 echo "Compiling the file..."
-riscv32-unknown-elf-gcc -march=rv32gc -mabi=ilp32 -nostdlib -T "$linker_file" "$asm_test_file" -o test.elf
+riscv32-unknown-elf-gcc -march=rv32gc -mabi=ilp32 -nostdlib -T "$linker_file" "$asm_test_file" -o ./logs/test.elf
 echo "Compilation completed."
 
 # Step 5: Generate the log file for Sail
 if [ "$run_sail" = true ]; then
   echo "Log file Generation for Sail Started"
-  timeout 2s riscv_sim_RV32 test.elf > sail.log 2>/dev/null
+  timeout 2s riscv_sim_RV32 ./logs/test.elf > ./logs/sail.log 2>/dev/null
   exit_code=$?
 
   if [ $exit_code -eq 124 ]; then
@@ -63,7 +63,7 @@ if [ "$run_sail" = true ]; then
 
   #step 6: Check the value of x31 and run mutliple tests
 
-  x31_value_hex=$(grep -n 'x31 <-' sail.log | tail -1 | awk '{print $3}')
+  x31_value_hex=$(grep -n 'x31 <-' ./logs/sail.log | tail -1 | awk '{print $3}')
   x31_value_dec=$((x31_value_hex))
   echo "Value of register x31 in sail.log: $x31_value_dec"
 
@@ -78,7 +78,7 @@ fi
 # Step 6: Generate the log file for Spike
 if [ "$run_spike" = true ]; then
   echo "Log File Generation for Spike Started"
-  timeout 2s spike -d --isa=RV32gc test.elf 1>spike.out 2>spike.log &
+  timeout 2s spike -d --isa=RV32gc ./logs/test.elf 1>./logs/spike.out 2>./logs/spike.log &
   spike_pid=$!
 
   # Wait for the background process to complete and get the exit code
