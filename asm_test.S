@@ -6,40 +6,38 @@
 _start:
 
     
-    la   t1,      pgtb_l0
+    la t1, pgtb_l0
+    mv a1, t1
+
+    GEN_VA(a1, a0, 0x280, 0x002)
+    li a2, 0x001
+
+    PTE_SETUP_RV32(a1, a2, t1, a0, 1)
+
+    la t1, code 
     mv   a1,      t1
-    li   a0,      0xA0002000
-    li   a2,      0x001
-    li   a3,      0x1
-    jal  func_pte
+    GEN_VA(a1, a0, 0x280, 0x000)
+    mv t3, a0
+    li a2, 0x0CF
 
-    la   t1,      code 
-    mv   a1,      t1
-    li   a0,      0xA0000100
-    li   a2,      0x0CF
-    li   a3,      0x0
-    jal  func_pte
+    PTE_SETUP_RV32(a1, a2, t1, a0, 0)
 
-    la   t1,      arr
-    mv   a1,      t1
-    li   a0,      0xA0004000
-    li   a2,      0x0C3
-    li   a3,      0x0
-    jal  func_pte
+    la t1, arr
+    mv a1, t1
+    GEN_VA(a1, a0, 0x280, 0x004)
+    mv t4, a0
+    li a2, 0x0C3
+ 
+    PTE_SETUP_RV32(a1, a2, t1, a0, 0)
+    SATP_SETUP_SV32 
 
-    li   t1,      0x80000000
-    la   t0,      pgtb_l1
-    srli t0,      t0, 12
-    or   t0,      t0, t1
-    csrw satp,    t0
-
-    la   t2,      trap_handler
-    WRITE_CSR(mtvec, t2)
-    WRITE_CSR(mepc, t3)
-    li   t2,      0x1800
-    CLEAR_CSR(mstatus, t2)
-    li   t2,      0xC0800
-    SET_CSR(mstatus, t2)
+    la t2, trap_handler
+    WRITE_CSR (mtvec, t2)
+    WRITE_CSR (mepc, t3)
+    li t2, 0x1800
+    CLEAR_CSR (mstatus, t2)
+    li t2,  0xC0800
+    SET_CSR (mstatus, t2)
     MRET
 
 code:
@@ -49,7 +47,6 @@ exit:
     li t1, 1
     sw t1, 0(t0)
     j exit
-
 
 .data
 
@@ -64,5 +61,5 @@ arr:
 .word 0x23
 
 
-.align 4; .global tohost;  tohost: .dword 0;
+.align 4; .global tohost;   tohost:   .dword 0;
 .align 4; .global fromhost; fromhost: .dword 0;
