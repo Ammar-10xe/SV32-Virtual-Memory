@@ -29,6 +29,7 @@ machine_mode:
 
 
 
+
 exit:
     la t0, tohost
     li t1, 1
