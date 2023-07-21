@@ -1,7 +1,7 @@
 # Test to show writing {zero, non-zero} value to satp when mode=bare and the behavior follows the design implementation.
 
 #include "../macros.h"
-.include "./trap_handler.S"
+.include "./trap_handler_bare_mode.S"
 
 .text
 .globl _start
