@@ -8,30 +8,22 @@ _start:
     la t1, trap_handler
     csrw   mtvec, t1
     la a0, machine_mode
-    jalr a0
-    
-    la   a1, change_mode_supervisor
-    jalr a1
-    
+    jalr a0 
     j exit
 
 machine_mode:
-    # Save machine mode satp
-    li t1, 0xdeadbeef
-    csrrw s1, satp, t1
-    li t2, 0xf0000000
+
+    li t1, 0x0000ffff
+    li t2, 0xffffffff
+    li t3, 0x12345678
+    csrrs s3, satp, t1
     csrrc s2, satp, t2
-    li t3,0x0eefdead
-    csrrs s3,satp,t3
-    ret
-
-m_trap:
-    csrr    t0, mepc
-    csrr    t1, mcause
-    j       exit
-
-
-change_mode_supervisor: //chnages mode from M to S
+    csrrw s1, satp, t3
+    // If SATP is accessible chnagae mode to S
+    la   t4, change_mode_supervisor
+    j    a1
+    
+change_mode_supervisor: // Chnages mode from M to S
 
     li      t0, 0x1800
     csrc    mstatus, t0
@@ -43,19 +35,33 @@ change_mode_supervisor: //chnages mode from M to S
     
 supervisor_mode:
     
-    
-    li t2, 0xdeadbeef
-    csrrw s1, satp, t2
-    li t3, 0xf0000000
-    csrrc s2, satp, t3
-    li t4,0x1eefdead
-    csrrs s3,satp,t4
-
-    j exit
-
-
+    li t1, 0x0000ffff
+    li t2, 0xffffffff
+    li t3, 0x12345678
+    csrrs s3, satp, t1
+    csrrc s2, satp, t2
+    csrrw s1, satp, t3
+    // If SATP is accessible chnagae mode to S
+    la   a1, change_mode_user
+    j    a1
 
 
+
+change_mode_user: //chnages mode from S to U
+
+    la      t0, user_mode
+    csrw    sepc, t0
+    sret 
+
+
+user_mode:
+
+    li t1, 0x0000ffff
+    li t2, 0xffffffff
+    li t3, 0x12345678
+    csrrs s3, satp, t1
+    csrrc s2, satp, t2
+    csrrw s1, satp, t3
 
 
 exit:
