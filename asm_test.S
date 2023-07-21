@@ -1,4 +1,4 @@
-.include "func_pte.S"
+#include "macros.h"
 .include "trap_handler.S"
 #.include "func1.s"
 .text
@@ -41,11 +41,11 @@ _start:
     MRET
 
 code:
-    lw   t6,      0(t4)
+    li   t5,      0xA0004000
+    lw   t6,      0(t5)
 exit:
     la t0, tohost
-    li t1, 1
-    sw t1, 0(t0)
+    EXIT_LOGIC(t0)
     j exit
 
 .data

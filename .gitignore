@@ -20,6 +20,10 @@ venv.bak/
 *.log
 *.out
 test.elf
+spike.log
+sail.log
+sail.out
+spike.out
 
 # Executables
 *.exe
