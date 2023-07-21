@@ -32,12 +32,12 @@ change_mode_supervisor: // Chnages mode from M to S
     mret  
     
 supervisor_mode:
-#     li t1, 0x80
-#     csrr t2,mcause
-#     beq t1, t2, check_Sdone 
-#     j exit   
+    li t1, 0x800
+    csrr t2, mcause
+    beq t1, t2, check_Sdone 
+    j exit   
 
-# check_Sdone:
+check_Sdone:
     li t1, 0x0000ffff
     li t2, 0xffffffff
     li t3, 0x12345678
