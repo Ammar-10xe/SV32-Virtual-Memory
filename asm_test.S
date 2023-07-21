@@ -33,16 +33,16 @@ _start:
     SATP_SETUP_SV32 
 
     la   t2,      trap_handler
-    csrw mtvec,   t2
-    csrw mepc,    t3
+    WRITE_CSR(mtvec, t2)
+    WRITE_CSR(mepc, t3)
     li   t2,      0x1800
-    csrc mstatus, t2
+    CLEAR_CSR(mstatus, t2)
     li   t2,      0xC0800
-    csrs mstatus, t2
-    mret
+    SET_CSR(mstatus, t2)
+    MRET
 
 code:
-    lw   t6,      0(t4)
+    LREG t6,    0(t4)
 exit:
     la t0, tohost
     EXIT_LOGIC(t0)
