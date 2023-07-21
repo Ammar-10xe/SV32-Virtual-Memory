@@ -42,7 +42,14 @@ _start:
 
 code:
     li   t5,      0xA0004000
-    CHECK_SV32_MODE(t6)
+    CHECK_SV32_MODE(t2)
+    beq t2, zero, Failed 
+
+Passed:
+    addi t6, zero, 0x1
+    j exit
+Failed:
+    addi t6, zero, 0x0
 exit:
     la t0, tohost
     EXIT_LOGIC(t0)

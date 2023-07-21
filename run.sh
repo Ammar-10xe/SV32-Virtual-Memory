@@ -47,6 +47,19 @@ if [ "$run_sail" = true ]; then
   fi
 
   echo "Log File Generation for Sail Completed"
+
+  #step 6: Check the value of x31 and run mutliple tests
+
+  x31_value_hex=$(grep -n 'x31 <-' sail.log | tail -1 | awk '{print $3}')
+  x31_value_dec=$((x31_value_hex))
+  echo "Value of register x31 in sail.log: $x31_value_dec"
+
+  if [ "$x31_value_dec" -eq "1" ]; then
+    echo "Result: Passed"
+  else
+    echo "Result: Failed"
+  fi
+
 fi
 
 # Step 6: Generate the log file for Spike
@@ -64,4 +77,5 @@ if [ "$run_spike" = true ]; then
   fi
 
   echo "Log File Generation for Spike Completed"
+  echo "Note: Spike used for log generation. Use -sail flag for automated tests facility!"
 fi
