@@ -1,6 +1,6 @@
 trap_handler:
 
-    csrr  t0, mcause
+    csrr  t0,    mcause
     li    t1,   1
     beq   t0,   t1, instruction_access_fault
     li    t1,   2
@@ -22,7 +22,7 @@ instruction_access_fault:
 
 illegal_instruction_fault:
     j exit
-    
+
 load_access_fault:
     j exit
 

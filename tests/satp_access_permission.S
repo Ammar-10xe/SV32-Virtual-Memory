@@ -1,15 +1,13 @@
 # Verification Goals: Show that satp is only accessible in M and S mode and illegal instruction exception is generated when accessed in lower privilege mode
 # Discription: Access satp in M, S, and U mode using csrrw, csrrc, csrrs
 
-.include "../trap_handler.S"
+.include "./trap_handler.S"
 .text
 .global _start
 _start:
     la t1, trap_handler
     csrw   mtvec, t1
-    la a0, machine_mode
-    jalr a0 
-    j exit
+    j      machine_mode
 
 machine_mode:
 
@@ -19,7 +17,7 @@ machine_mode:
     csrrs s3, satp, t1
     csrrc s2, satp, t2
     csrrw s1, satp, t3
-    // If SATP is accessible chnagae mode to S
+    // If SATP is accessible change mode to S
     j change_mode_supervisor
 
 
@@ -34,14 +32,15 @@ change_mode_supervisor: // Chnages mode from M to S
     mret  
     
 supervisor_mode:
-    
+    beq mstatus, 0x20
+
     li t1, 0x0000ffff
     li t2, 0xffffffff
     li t3, 0x12345678
     csrrs s3, satp, t1
     csrrc s2, satp, t2
     csrrw s1, satp, t3
-    // If SATP is accessible chnagae mode to S
+    // If SATP is acchnagaecessible change mode to S
     j change_mode_user
 
 
