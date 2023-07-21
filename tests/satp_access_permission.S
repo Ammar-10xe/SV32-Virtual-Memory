@@ -1,5 +1,9 @@
-# Verification Goals: Show that satp is only accessible in M and S mode and illegal instruction exception is generated when accessed in lower privilege mode
-# Discription: Access satp in M, S, and U mode using csrrw, csrrc, csrrs
+###############################################################################################
+#                                                                                             #
+# Verification Goals:Show that satp is only accessible in M and S mode and illegal            #  
+#                   instruction exception is generated when accessed in lower privilege mode  #
+# Description:      Access satp in M, S, and U mode using csrrw, csrrc, csrrs                 #
+###############################################################################################
 
 .include "./trap_handler.S"
 #include "../macros.h"
