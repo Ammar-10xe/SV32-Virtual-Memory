@@ -11,6 +11,11 @@
 .text
 .global _start
 _start:
+
+###########################################
+#    | M-mode Configurations and code |   #
+###########################################
+
     la     t1, trap_handler
     csrw   mtvec, t1
     j      machine_mode
@@ -36,6 +41,10 @@ change_mode_supervisor: // Chnages mode from M to S
     csrw    mepc,t2 
     mret  
     
+###########################################
+#    | S-mode Configurations and code |   #
+###########################################
+
 supervisor_mode:
 
     li t1, 0x0000ffff
@@ -53,9 +62,11 @@ change_mode_user: //chnages mode from S to U
     csrw    sepc, t0
     sret 
 
+###########################################
+#    | U-mode Configurations and code |   #
+###########################################
+
 user_mode:
-
-
 
     li t1, 0x0000ffff
     li t2, 0xffffffff
