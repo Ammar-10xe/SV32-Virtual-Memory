@@ -12,6 +12,10 @@
 #define FLUSH 0x1
 #define NO_FLUSH 0x0
 
+#define WRITE_MEPC(_TR1, LABEL)                             ;\
+    la _TR1, LABEL                                          ;\
+    WRITE_CSR(mepc, _TR1)                                   ;
+
 #define SET_RWX_PERMISSION(REG, ZERO)                       ;\
     .if(ZERO==FLUSH)                                        ;\
         SET_PTE_R(REG, FLUSH)                               ;\

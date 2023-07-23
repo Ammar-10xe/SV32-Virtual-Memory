@@ -1,60 +1,70 @@
-#include "../macros.h"
-.include "./trap_handler_tvm.S"
+#include "macros.h"
+.include "trap_handler.S"
 #.include "func1.s"
+.equiv PMP_REG0_TOR, 0x80000800
+
+.equiv PMP_REG1_NAPOT, 0x80002000
 .text
 .global _start
 _start:
 
     
-    la a1, pgtb_l0
+    la t1, pgtb_l0
+    mv a1, t1
+
     GEN_VA(a1, a0, 0x280, 0x002)
-    SET_VALID_BIT(a2, FLUSH)
+    li a2, 0x001
 
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)
 
-    la a1, code
+    la t1, code 
+    mv   a1,      t1
     GEN_VA(a1, a0, 0x280, 0x000)
     mv t3, a0
-    SET_RWXV_BITS(a2, FLUSH)
-    SET_ACCESS_BIT(a2, NO_FLUSH)
-    SET_DIRTY_BIT(a2, NO_FLUSH)
+    li a2, 0x0CF
+
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
 
-    la a1, code_jump_back
+    la t1, arr
+    mv a1, t1
     GEN_VA(a1, a0, 0x280, 0x004)
-    mv a5, a0  #virtual address of code_jump_back
-    SET_RWXV_BITS(a2, FLUSH)
-    SET_ACCESS_BIT(a2, NO_FLUSH)
-    SET_DIRTY_BIT(a2, NO_FLUSH)
+    mv t4, a0
+    li a2, 0x0C3
+ 
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
-
     SATP_SETUP_SV32 
     
+
     la t2, trap_handler
     WRITE_CSR (mtvec, t2)
-    WRITE_CSR (mepc , t3)
+    WRITE_CSR (mepc, t3)
     li t2, 0x1800
     CLEAR_CSR (mstatus, t2)
-    li t2,  0x100800
+    li t2,  0xC0800
     SET_CSR (mstatus, t2)
+    
+    # # TOR upto 0x80000800
+    li t0, PMP_REG0_TOR;
+    srli t0, t0, 2;
+    csrw pmpaddr0, t0;
+    sfence.vma
+
+    # # 32 Bytes NAPOT from 0x80001000
+    # li t0, PMP_REG1_NAPOT;
+    # srli t0, t0, 2;
+    # ori t0, t0, 3;
+    # csrw pmpaddr1, t0; 
+
+    li t0, 0x07071988;
+    csrw pmpcfg0, t0;
+
+    sfence.vma
+
     MRET
 
 code:
-    li   t5     ,  0xA0004000
-    li   t4     ,  0x80000000
-    li t6,1
-    csrw satp   ,  t4
-
-
-code_jump_back:
-    li t6,2
-    sfence.vma a3, a4
-    j exit
-Passed:
-    addi t6, zero, 0x1
-    j exit
-Failed:
-    addi t6, zero, 0x0
+    li   t5,      0xA0004000
+    lw   t6,      0(t5)
 exit:
     la t0, tohost
     EXIT_LOGIC(t0)

@@ -7,6 +7,10 @@
 .globl _start
 _start:
 
+###########################################
+#    | M-mode Configurations and code |   #
+###########################################
+
     # Setting up page table with SV32 translation scheme
     la t1, pgtb_l0
     mv a1, t1

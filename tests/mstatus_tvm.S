@@ -1,7 +1,7 @@
 #include "../macros.h"
-.include "./trap_handler.S"
+.include "./trap_handler_tvm.S"
 #.include "func1.s"
-
+#define mstatus_tvm
 .text
 .global _start
 _start:
@@ -14,7 +14,6 @@ M_Mode:
     la a1, pgtb_l0
     GEN_VA(a1, a0, 0x280, 0x002)
     SET_PTE_V(a2, FLUSH)
-
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)
 
     la a1, S_Mode
@@ -23,25 +22,24 @@ M_Mode:
     SET_RWXV_BITS(a2, FLUSH)
     SET_PTE_A(a2, NO_FLUSH)
     SET_PTE_D(a2, NO_FLUSH)
-
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
 
-    la a1, arr
+    la a1, code_jump_back
     GEN_VA(a1, a0, 0x280, 0x004)
-    mv t4, a0
-    SET_RV_BITS(a2, FLUSH)
+    mv a5, a0  #virtual address of code_jump_back
+    SET_RWXV_BITS(a2, FLUSH)
     SET_PTE_A(a2, NO_FLUSH)
     SET_PTE_D(a2, NO_FLUSH)
- 
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
-    SATP_SETUP_SV32 
 
+    SATP_SETUP_SV32 
+    
     la t2, trap_handler
     WRITE_CSR (mtvec, t2)
-    WRITE_CSR (mepc, t3)
+    WRITE_CSR (mepc , t3)
     li t2, 0x1800
     CLEAR_CSR (mstatus, t2)
-    li t2,  0xC0800
+    li t2,  0x100800
     SET_CSR (mstatus, t2)
     MRET
 
@@ -49,10 +47,25 @@ M_Mode:
 #    | S-mode Configurations and code |   #
 ###########################################
 S_Mode:
+    li   t5     ,  0xA0004000
+    li   t4     ,  0x80000000
+    li t6,1
+    csrw satp   ,  t4
 
-    li   t5,      0xA0004000
-    CHECK_SV32_MODE(t0)
+###########################################
+#    | U-mode Configurations and code |   #
+###########################################
 
+
+code_jump_back:
+    li t6,2
+    sfence.vma a3, a4
+    j exit
+Passed:
+    addi t6, zero, 0x1
+    j exit
+Failed:
+    addi t6, zero, 0x0
 exit:
     la t0, tohost
     EXIT_LOGIC(t0)
