@@ -22,14 +22,14 @@ _start:
 
     la a1, code_jump_back
     GEN_VA(a1, a0, 0x280, 0x004)
+    mv a5, a0  #virtual address of code_jump_back
     SET_RWXV_BITS(a2, FLUSH)
     SET_ACCESS_BIT(a2, NO_FLUSH)
     SET_DIRTY_BIT(a2, NO_FLUSH)
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
 
-
     SATP_SETUP_SV32 
-
+    
     la t2, trap_handler
     WRITE_CSR (mtvec, t2)
     WRITE_CSR (mepc , t3)
@@ -42,11 +42,13 @@ _start:
 code:
     li   t5     ,  0xA0004000
     li   t4     ,  0x80000000
+    li t6,1
     csrw satp   ,  t4
 
 
 code_jump_back:
-    li t6, 0xFFFFFFFF
+    li t6,2
+    sfence.vma a3, a4
     j exit
 Passed:
     addi t6, zero, 0x1
