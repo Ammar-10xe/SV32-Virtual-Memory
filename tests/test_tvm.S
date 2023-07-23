@@ -1,5 +1,5 @@
 #include "../macros.h"
-.include "./trap_handler.S"
+.include "./trap_handler_tvm.S"
 #.include "func1.s"
 .text
 .global _start
