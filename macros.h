@@ -160,9 +160,8 @@
     or   t6,   t6, t5                                       ;\
     WRITE_CSR(satp, t6)                                     ;
 
-#define EXIT_LOGIC(REG)                                     ;\
-    li   t1, 1                                              ;\
-    SREG t1, 0(REG)                                         ;
+#define EXIT_LOGIC(REG, VAL)                                ;\
+    SREG VAL, 0(REG)                                        ;
 
 #define GEN_VA(PA, VA, UP_10_BITS, MID_10_BITS)             ;\
     slli VA, PA, 20                                         ;\

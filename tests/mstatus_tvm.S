@@ -68,7 +68,8 @@ Failed:
     addi t6, zero, 0x0
 exit:
     la t0, tohost
-    EXIT_LOGIC(t0)
+    li t1, 1
+    EXIT_LOGIC(t0, t1)
     j exit
 
 .data

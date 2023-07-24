@@ -51,11 +51,11 @@ M_Mode:
 S_Mode:
 
     li   t5,      0xA0004000
-    CHECK_SV32_MODE(t0)
+    CHECK_SV32_MODE(t1)
 
 exit:
     la t0, tohost
-    EXIT_LOGIC(t0)
+    EXIT_LOGIC(t0, t1)
     j exit
 
 .data
