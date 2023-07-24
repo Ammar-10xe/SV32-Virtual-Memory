@@ -63,9 +63,9 @@ if [ "$run_sail" = true ]; then
 
   #step 6: Check the value of x31 and run mutliple tests
 
-  x31_value_hex=$(grep -n 'x31 <-' ./logs/sail.log | tail -1 | awk '{print $3}')
+  x31_value_hex=$(grep -n 'x6 <-' ./logs/sail.log | tail -1 | awk '{print $3}')
   x31_value_dec=$((x31_value_hex))
-  echo "Value of register x31 in sail.log: $x31_value_dec"
+  echo "Value of tohost in sail.log: $x31_value_dec"
 
   if [ "$x31_value_dec" -eq "1" ]; then
     echo "Result: Passed"
