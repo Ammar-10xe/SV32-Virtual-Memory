@@ -17,7 +17,7 @@ M_Mode:
 
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)
 
-    la a1, S_Mode
+    la a1, code
     GEN_VA(a1, a0, 0x280, 0x000)
     mv t3, a0
     SET_RWXV_BITS(a2, FLUSH)
@@ -41,16 +41,16 @@ M_Mode:
     WRITE_CSR (mepc, t3)
     li t2, 0x1800
     CLEAR_CSR (mstatus, t2)
-    li t2,  0xC0800
+    li t2,  0x00800
     SET_CSR (mstatus, t2)
     MRET
 
 ###########################################
 #    | S-mode Configurations and code |   #
 ###########################################
-S_Mode:
+code:
 
-    li   t5,      0xA0004000
+    # li   t5,      0xA0004000
     CHECK_SV32_MODE(t1)
 
 exit:
