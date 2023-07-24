@@ -1,5 +1,6 @@
 #include "encoding.h"
 
+#define MSTATUS_MPS 0x00000800
 #define pgtb_le1 0x80001000
 #define pgtb_le0 0x80002000
 
@@ -108,9 +109,7 @@
     ori REG, REG, PTE_V                                     ;
 
 #define CHECK_SV32_MODE(REG)                                ;\
-    GET_SATP_MODE(REG)                                      ;
-
-                                    ;    
+    GET_SATP_MODE(REG)                                      ;  
 
 #define GET_SATP_MODE(DST_REG)                              ;\
     READ_CSR(satp, DST_REG)                                 ;\
@@ -123,7 +122,7 @@
     csrc CSR_REG, SRC_REG                                   ;
 
 #define SET_CSR(CSR_REG, SRC_REG)                           ;\
-    csrw CSR_REG, SRC_REG                                   ;
+    csrs CSR_REG, SRC_REG                                   ;
 
 #define READ_CSR(CSR_REG, DST_REG)                          ;\
     csrr DST_REG, CSR_REG                                   ;
@@ -159,7 +158,7 @@
     SREG VAL, 0(REG)                                        ;
 
 #define GEN_VA(PA, VA, UP_10_BITS, MID_10_BITS)             ;\
-    slli VA, PA, 20                                         ;\
+    slli VA, csrr DSPA, 20                                  ;\
     srli VA, VA, 20                                         ;\
     li   t0, UP_10_BITS                                     ;\
     slli t0, t0, 22                                         ;\
@@ -167,3 +166,19 @@
     li   t0, MID_10_BITS                                    ;\
     slli t0, t0, 12                                         ;\
     or   VA, VA, t0                                         ;
+
+
+
+#define CHANGE_T0_S_MODE(MEPC_ADDR)   ;\
+    li        t0, MSTATUS_MPP         ;\
+    CLEAR_CSR (mstatus, t0)           ;\
+    li t1,    MSTATUS_MPS             ;\
+    SET_CSR   (mstatus,t1)            ;\
+    WRITE_CSR (mepc,MEPC_ADDR)        ;\
+    mret                              ;
+
+#define CHANGE_T0_U_MODE(SEPC_ADDR)   ;\
+    li        t0, SSTATUS_SPP         ;\
+    CLEAR_CSR (sstatus,t0)            ;\
+    WRITE_CSR (sepc,SEPC_ADDR)        ;\
+    sret                              ;
