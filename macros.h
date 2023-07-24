@@ -158,7 +158,7 @@
     SREG VAL, 0(REG)                                        ;
 
 #define GEN_VA(PA, VA, UP_10_BITS, MID_10_BITS)             ;\
-    slli VA, csrr DSPA, 20                                  ;\
+    slli VA, VA, 20                                         ;\
     srli VA, VA, 20                                         ;\
     li   t0, UP_10_BITS                                     ;\
     slli t0, t0, 22                                         ;\
