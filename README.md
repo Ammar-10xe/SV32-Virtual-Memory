@@ -12,7 +12,7 @@ Before you can run the tests, you need to have the following tools installed:
 
 3. Sail Simulator: Sail is a language for describing the semantics of instruction set architectures (ISAs), and tools for generating emulators, theorem proving tools, etc. from these descriptions. You can download it from [here](https://github.com/riscv/sail-riscv).
 
-__Additionally, create a folder named "logs" in the root directory of this repository. The logs of each test run will be generated inside this folder.__
+***Additionally, create a folder named "logs" in the root directory of this repository. The logs of each test run will be generated inside this folder.***
 
 ## Running the Tests
 To run the tests, we have provided a script `run.sh`. You can execute this script with the `-sail` or `-spike` flag to choose the simulator you want to use. You also need to provide the linker file and the path for the test you want to run.
