@@ -129,13 +129,8 @@
     csrr DST_REG, CSR_REG                                   ;
 
 #define PTE(PA, PR)                                         ;\
-    srli     PA,   PA, 12                                   ;\
-    slli     PA,   PA, 10                                   ;\
-    or       PA,   PA, PR                                   ;
-
-#define PTE(PA, PR)                                         ;\
     srli     PA, PA, 12                                     ;\
-    slli     PA, PA, 10                                     ;\
+    slli     PA, PA, PTE_PPN_SHIFT                          ;\
     or       PA, PA, PR                                     ;
 
 #define PTE_SETUP_RV32(PA, PR, TMP, VA, level)              ;\
