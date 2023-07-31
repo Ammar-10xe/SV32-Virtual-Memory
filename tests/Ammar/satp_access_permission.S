@@ -6,7 +6,7 @@
 ###############################################################################################
 
 .include "./trap_handler.S"
-#include "../macros.h"
+#include "../../macros.h"
 
 .text
 .global _start
@@ -53,7 +53,6 @@ user_mode:
 exit:
     la t0, tohost
     li t1, 1
-    li t6, 1
     sw t1, 0(t0)
     j exit
 
