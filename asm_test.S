@@ -5,7 +5,10 @@
 .global _start
 _start:
 
-    
+    li t2, -1		                                            
+	csrw pmpaddr0, t2                                            
+	li t2, 0x0F		                                            
+	csrw pmpcfg0, t2 
     la t1, pgtb_l0
     mv a1, t1
 
@@ -18,7 +21,7 @@ _start:
     mv   a1,      t1
     GEN_VA(a1, a0, 0x280, 0x000)
     mv t3, a0
-    li a2, 0x0CF
+    li a2, 0x0CE
 
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
 
@@ -45,7 +48,8 @@ code:
     lw   t6,      0(t5)
 exit:
     la t0, tohost
-    EXIT_LOGIC(t0)
+    li t1, 1
+    EXIT_LOGIC(t0, t1)
     j exit
 
 .data
