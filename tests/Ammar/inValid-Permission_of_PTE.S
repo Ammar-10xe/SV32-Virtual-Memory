@@ -11,36 +11,19 @@
 .text
 .global _start
 _start:
-    # li t2, -1		                                            
-	# csrw pmpaddr0, t2                                            
-	# li t2, 0x0F		                                            
-	# csrw pmpcfg0, t2 
-
-    PMP_ALL_MEM
-
-    la     t1, trap_handler
+    PMP_ALL_MEM                 # set the PMP permissions
+    la     t1, trap_handler     # set mtvec for trap
     csrw   mtvec, t1
 
-    la a1,code
-
+    la a1,code                  # set the PTE on l1
     GEN_VA(a1, a0, 0x100, 0x000)
     mv t4,a0
     li a2, 0x0CF
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)
     
-
-
-    # la a1,code
-    # GEN_VA(a1, a0, 0x100, 0x050)
-    # li t4,a0
-    # li a2, 0x0CE
-    # PTE_SETUP_RV32(a1, a2, t1, a0, 0)
     
-    
-    SATP_SETUP_SV32 
-
-    
-    CHANGE_T0_S_MODE(t4)
+    SATP_SETUP_SV32            # set the SATP for virtualization
+    CHANGE_T0_S_MODE(t4)       # changes mode M to S
 
     # la     t1, trap_handler
     # csrw   mtvec, t1
@@ -73,6 +56,8 @@ pgtb_l0_1:
     .zero 4096
 arr:
 .word 0x23
+
+
 .align 4; .global tohost;   tohost:   .dword 0;
 .align 4; .global fromhost; fromhost: .dword 0;
 
