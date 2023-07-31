@@ -15,6 +15,11 @@ _start:
 ###########################################
 #    | M-mode Configurations and code |   #
 ###########################################
+    li t2, -1		                                            
+	csrw pmpaddr0, t2                                            
+	li t2, 0x0F		                                            
+	csrw pmpcfg0, t2                                               
+
     la     t1, trap_handler
     csrw   mtvec, t1
     j      machine_mode
