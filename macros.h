@@ -843,3 +843,10 @@
     .endif                                                         ;\
     li x1, 1                                                       ;\
     j exit                                                         ;
+
+
+ #define PMP_ALL_MEM               ;\
+    li t2, -1		               ;\
+    WRITE_CSR (pmpaddr0, t2)       ;\
+    li t2, 0x0F		               ;\
+    WRITE_CSR (pmpcfg0, t2)        ;

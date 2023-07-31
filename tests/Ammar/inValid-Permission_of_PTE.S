@@ -11,10 +11,12 @@
 .text
 .global _start
 _start:
-    li t2, -1		                                            
-	csrw pmpaddr0, t2                                            
-	li t2, 0x0F		                                            
-	csrw pmpcfg0, t2 
+    # li t2, -1		                                            
+	# csrw pmpaddr0, t2                                            
+	# li t2, 0x0F		                                            
+	# csrw pmpcfg0, t2 
+
+    PMP_ALL_MEM
 
     la     t1, trap_handler
     csrw   mtvec, t1
@@ -23,7 +25,7 @@ _start:
 
     GEN_VA(a1, a0, 0x100, 0x000)
     mv t4,a0
-    li a2, 0x0CE
+    li a2, 0x0CF
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)
     
 
