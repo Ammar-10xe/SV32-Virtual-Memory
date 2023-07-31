@@ -52,7 +52,7 @@ echo "Compilation completed."
 # Step 5: Generate the log file for Sail
 if [ "$run_sail" = true ]; then
   echo "Log file Generation for Sail Started"
-  timeout 2s riscv_sim_RV32 ./logs/test.elf > ./logs/sail.log 2>/dev/null
+  timeout 2s riscv_sim_RV32 --enable-pmp ./logs/test.elf > ./logs/sail.log 2>/dev/null
   exit_code=$?
 
   if [ $exit_code -eq 124 ]; then
@@ -63,9 +63,9 @@ if [ "$run_sail" = true ]; then
 
   #step 6: Check the value of x31 and run mutliple tests
 
-  x31_value_hex=$(grep -n 'x31 <-' ./logs/sail.log | tail -1 | awk '{print $3}')
+  x31_value_hex=$(grep -n 'x6 <-' ./logs/sail.log | tail -1 | awk '{print $3}')
   x31_value_dec=$((x31_value_hex))
-  echo "Value of register x31 in sail.log: $x31_value_dec"
+  echo "Value of tohost in sail.log: $x31_value_dec"
 
   if [ "$x31_value_dec" -eq "1" ]; then
     echo "Result: Passed"
