@@ -22,6 +22,16 @@ _start:
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)
     
     
+    la a1,arr                  # set the PTE on l1
+    GEN_VA(a1, a0, 0x200, 0x000)
+    mv t5,a0
+    li a2, 0x0CE
+    PTE_SETUP_RV32(a1, a2, t1, a0, 1)
+    
+    
+
+
+    
     SATP_SETUP_SV32            # set the SATP for virtualization
     CHANGE_T0_S_MODE(t4)       # changes mode M to S
 
@@ -36,9 +46,9 @@ _start:
     # CHANGE_T0_S_MODE(t4)
 
 code:
-    li t6, 0x34
-    li t6, 0x10
-
+    # li t6, 0x34
+    # li t6, 0x10
+    sw t1,0(t5)
 exit:
     la t0, tohost
     li t1, 1
