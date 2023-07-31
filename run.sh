@@ -52,7 +52,7 @@ echo "Compilation completed."
 # Step 5: Generate the log file for Sail
 if [ "$run_sail" = true ]; then
   echo "Log file Generation for Sail Started"
-  timeout 2s riscv_sim_RV32 ./logs/test.elf > ./logs/sail.log 2>/dev/null
+  timeout 2s riscv_sim_RV32 --enable-pmp ./logs/test.elf > ./logs/sail.log 2>/dev/null
   exit_code=$?
 
   if [ $exit_code -eq 124 ]; then
