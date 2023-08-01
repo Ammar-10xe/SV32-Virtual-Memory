@@ -30,7 +30,7 @@ _start:
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)     # setup the PTE for level1   
      
     SATP_SETUP_SV32                       # set the SATP for virtualization
-    CHANGE_T0_U_MODE(t2)                  # changes mode M to S and set the MEPC value to t2
+    CHANGE_T0_U_MODE(t2)                  # changes mode M to U and set the MEPC value to t2
 
 code:
     lw t1,0(t3)                            
