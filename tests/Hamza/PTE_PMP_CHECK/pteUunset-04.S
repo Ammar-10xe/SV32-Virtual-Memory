@@ -11,6 +11,7 @@ _start:
     TEST_UBIT_UNSET(0x00, 0, 0, 0, 1, 1)
 
 exit:
+    csrr t2,mstatus
 	slli x1, x1, 1
 	addi x1, x1, 1
     mv x30, s1

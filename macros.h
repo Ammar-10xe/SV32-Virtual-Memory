@@ -1033,7 +1033,6 @@
     .if(W == 1)                                                    ;\
         sw t1, 0(t4)                                               ;\
     .endif                                                         ;\
-        li x1, 1                                                   ;\
     j exit                                                         ;\
     user_code:                                                     ;\
     li t1, 0x45                                                    ;\
@@ -1043,14 +1042,12 @@
     .if(W == 1)                                                    ;\
         sw t1, 0(t4)                                               ;\
     .endif                                                         ;\
-        li x1, 1                                                   ;\
     j exit     ;
-    
+
     #define TRAP_HANDLER( TRAP )                                   ;\
     la t1, TRAP                                                    ;\
-    WRITE_CSR( mtvec,t1 )                                          ;  
-    
-    
+    WRITE_CSR( mtvec,t1 )                                          ;
+
     #define RVTEST_DATA_SECTION                                    ;\
     .data                                                          ;\
     arr:                                                           ;\
@@ -1060,3 +1057,4 @@
         .zero 4096                                                 ;\
     pgtb_l0:                                                       ;\
         .zero 4096                                                 ;
+
