@@ -708,7 +708,7 @@
     user_code:                                                     ;\
     li t1, 0x45                                                    ;\
     .if(R == 1)                                                    ;\
-        lw t1, 0(t4)                                               ;\
+        lw t1, 0(t4)      la a1,code                                         ;\
     .endif                                                         ;\
     .if(W == 1)                                                    ;\
         sw t1, 0(t4)                                               ;\
@@ -1045,3 +1045,4 @@
     .endif                                                         ;\
         li x1, 1                                                   ;\
     j exit     ;
+    
