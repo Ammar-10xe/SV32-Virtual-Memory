@@ -2,7 +2,7 @@
 #                                                                                             #
 # Verification Goals: In-Valid Permission of PTE                                              #  
 #                                                                                             #
-# Description: Set PTE.V = 0 and test the Read Acces in Supervisor mode for Level0.           #
+# Description: Set PTE.V = 0 and test the Execute Acces in Supervisor mode for Level0.        #
 #                                                                                             #
 ###############################################################################################
 
@@ -25,7 +25,7 @@ _start:
     la a1,code                            # loads the address of label code
     GEN_VA(a1, a0, 0x100, 0x000)          # generrates the VA for label code
     mv t2,a0                              # move VA to t2
-    li a2, 0x0CF                          # sets the permission bits
+    li a2, 0x0CE                          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)     # setup the PTE for level1
     
     la a1,arr                             # loads the address of label arr

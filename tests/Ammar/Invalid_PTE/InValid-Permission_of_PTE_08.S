@@ -2,7 +2,7 @@
 #                                                                                             #
 # Verification Goals: In-Valid Permission of PTE                                              #  
 #                                                                                             #
-# Description: Set PTE.V = 0 and test the Read Acces in Supervisor mode for Level0.           #
+# Description: Set PTE.V = 0 and test the write Acces in Supervisor mode for Level0.           #
 #                                                                                             #
 ###############################################################################################
 
@@ -38,7 +38,7 @@ _start:
     CHANGE_T0_S_MODE(t2)                  # changes mode M to S and set the MEPC value to t2
 
 code:
-    lw t1,0(t3)                            
+    sw t1,0(t3)                            
 
 exit:
     la t0, tohost
