@@ -1025,7 +1025,7 @@
     .endif                                                         ;\
     SET_CSR (mstatus, t2)                                          ;\
     MRET                                                           ;\
-    supervisor_code:                                               ;\
+    supetrap_handlerrvisor_code:                                               ;\
     li t1, 0x45                                                    ;\
     .if(R == 1)                                                    ;\
         lw t1, 0(t4)                                               ;\
@@ -1046,3 +1046,17 @@
         li x1, 1                                                   ;\
     j exit     ;
     
+    #define TRAP_HANDLER( TRAP )                                   ;\
+    la t1, TRAP                                                    ;\
+    WRITE_CSR( mtvec,t1 )                                          ;  
+    
+    
+    #define RVTEST_DATA_SECTION                                    ;\
+        arr:                                                       ;\
+        .word 0x23                                                 ;\
+    .data                                                          ;\
+    pgtb_l1:                                                       ;\
+        .zero 4096                                                 ;\
+    .align 12                                                      ;\
+    pgtb_l0:                                                       ;\
+        .zero 4096                                                 ;
