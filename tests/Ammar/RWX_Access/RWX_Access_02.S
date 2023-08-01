@@ -1,6 +1,6 @@
 #################################################################################################           
 #                                                                                               #
-# Verification Goal: Test the Read Acces in Supervisor mode for Level1 PTE                      #
+# Verification Goal: Test the Write Acces in Supervisor mode for Level1 PTE                     #
 #                                                                                               #
 # Description:       RWX access should be successful if the corresponding permissions           #
 #                    are granted in the PTE. Check that load, store and execute works           #
@@ -43,8 +43,8 @@ _start:
     CHANGE_T0_S_MODE(t2)                  # changes mode M to S and set the MEPC value to t2
 
 code:
-    lw t1,0(t3)                           # test the Read Acces in Supervisor mode for Level1 PTE 
-    READ_CSR (mcause, t2)                 # exception to go back to M mode 
+    sw t1,4(t3)                           # test the Write Acces in Supervisor mode for Level1 PTE 
+    READ_CSR (mcause, t2)                 # creating an exception to go back to M mode 
     
 exit:
     la t0, tohost
