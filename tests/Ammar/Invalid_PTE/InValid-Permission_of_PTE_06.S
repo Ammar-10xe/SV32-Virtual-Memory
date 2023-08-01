@@ -2,7 +2,7 @@
 #                                                                                             #
 # Verification Goals: In-Valid Permission of PTE                                              #  
 #                                                                                             #
-# Description: Set PTE.V = 0 and test the Read Acces in User Mode for Level1.                 #
+# Description: Set PTE.V = 0 and test the Execute Acces in User Mode for Level1.              #
 #                                                                                             #
 ###############################################################################################
 

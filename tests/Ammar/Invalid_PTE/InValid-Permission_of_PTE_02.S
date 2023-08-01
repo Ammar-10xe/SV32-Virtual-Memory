@@ -2,7 +2,7 @@
 #                                                                                             #
 # Verification Goals: In-Valid Permission of PTE                                              #  
 #                                                                                             #
-# Description: Set PTE.V = 0 and test the write Acces in Supervisor mode for Level1.           #
+# Description: Set PTE.V = 0 and test the write Acces in Supervisor mode for Level1.          #
 #                                                                                             #
 ###############################################################################################
 
