@@ -19,6 +19,7 @@ venv.bak/
 *.elf
 *.log
 *.out
+*.vscode/
 test.elf
 spike.log
 sail.log
