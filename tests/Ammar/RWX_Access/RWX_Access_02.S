@@ -1,6 +1,6 @@
 #################################################################################################           
 #                                                                                               #
-# Verification Goal: Test the Write Acces in Supervisor mode for Level1 PTE                     #
+# Verification Goal: Test the Write Acces in Supervisor mode for Level1 (PTE.x = 1, PTE.w = 1)  #
 #                                                                                               #
 # Description:       RWX access should be successful if the corresponding permissions           #
 #                    are granted in the PTE. Check that load, store and execute works           #
