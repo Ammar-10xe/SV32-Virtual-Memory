@@ -1,8 +1,8 @@
 #################################################################################################           
 #                                                                                               #
-# Verification Goal: Test the Read Acces in Supervisor mode for Level0 (PTE.x = 1, PTE.r = 0)   #
+# Verification Goal: Test the Write Acces in Supervisor mode for Level0 (PTE.x = 1, PTE.w = 0)  #
 #                                                                                               #
-# Description:       Execute access should raise  load page fault for read access.              #           
+# Description:       Execute access should raise store/AMO page fault for write access.         #   
 #                                                                                               #
 #################################################################################################
 #                                                                                               #
@@ -12,7 +12,7 @@
 #                      non-reserved RWX encoding, pte.u=0 and pte.v=1, then test the following  #
 #                      in supervisor privilege mode level 1 PTE.                                #   
 #                                                                                               #
-######################Load page fault############################################################
+#################################################################################################   
 
 .include "./trap_handler.S"
 #include "../../../macros.h"
@@ -32,20 +32,20 @@ _start:
     la a1,code                            # loads the address of label code
     GEN_VA(a1, a0, 0x100, 0x000)          # generrates the VA for label code
     mv t2,a0                              # move VA to t2
-    li a2, 0x0C9                          # sets the permission bits
+    li a2, 0x0CB                          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)     # setup the PTE for level1
     
     la a1,arr                             # loads the address of label arr
     GEN_VA(a1, a0, 0x200, 0x000)          # generrates the VA for label arr
     mv t3,a0                              # move VA to t3
-    li a2, 0x0C9                          # sets the permission bits such as valid bit is 0
+    li a2, 0x0CB                          # sets the permission bits such as valid bit is 0
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)     # setup the PTE for level1   
      
     SATP_SETUP_SV32                       # set the SATP for virtualization
     CHANGE_T0_S_MODE(t2)                  # changes mode M to S and set the MEPC value to t2
 
 code:
-    lw t1,0(t3)                           # test the Read Acces in Supervisor mode for Level0 PTE 
+    sw t1,0(t3)                           # test the Read Acces in Supervisor mode for Level0 PTE 
     READ_CSR (mcause, t2)                 # exception to go back to M mode                            
 
 exit:
