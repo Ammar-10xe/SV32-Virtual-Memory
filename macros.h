@@ -1052,11 +1052,11 @@
     
     
     #define RVTEST_DATA_SECTION                                    ;\
-        arr:                                                       ;\
-        .word 0x23                                                 ;\
     .data                                                          ;\
+    arr:                                                           ;\
+        .word 0x23                                                 ;\
+    .align 12                                                      ;\
     pgtb_l1:                                                       ;\
         .zero 4096                                                 ;\
-    .align 12                                                      ;\
     pgtb_l0:                                                       ;\
         .zero 4096                                                 ;
