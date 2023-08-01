@@ -2,7 +2,7 @@
 #                                                                                               #
 # Verification Goal: Test the Read Acces in Supervisor mode for Level1 (PTE.x = 1, PTE.r = 0)   #
 #                                                                                               #
-# Description:       Execute access should raise instruction page fault.                        #                                    #
+# Description:       Execute access should raise load page fault for read access.               # 
 #                                                                                               #
 #################################################################################################
 #                                                                                               #
@@ -27,13 +27,13 @@ _start:
     la a1,code                            # loads the address of label code
     GEN_VA(a1, a0, 0x100, 0x000)          # generrates the VA for label code
     mv t2,a0                              # move VA to t2
-    li a2, 0x0CD                          # sets the permission bits
+    li a2, 0x0C9                          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)     # setup the PTE for level1
     
     la a1,arr                             # loads the address of label arr
     GEN_VA(a1, a0, 0x200, 0x000)          # generrates the VA for label arr
     mv t3,a0                              # move VA to t3
-    li a2, 0x0CD                          # sets the permission bits
+    li a2, 0x0C9                          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)     # setup the PTE for level1   
      
     SATP_SETUP_SV32                       # set the SATP for virtualization

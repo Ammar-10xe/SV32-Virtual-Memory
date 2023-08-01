@@ -2,7 +2,7 @@
 #                                                                                               #
 # Verification Goal: Test the Write Acces in Supervisor mode for Level1 (PTE.x = 0)             #
 #                                                                                               #
-# Description:       Execute access should raise Instruction page fault                         #                                    #
+# Description:       Execute access should raise instruction  page fault for execute.           #                                  
 #                                                                                               #
 #################################################################################################
 #                                                                                               #
