@@ -78,7 +78,7 @@ fi
 # Step 6: Generate the log file for Spike
 if [ "$run_spike" = true ]; then
   echo "Log File Generation for Spike Started"
-  timeout 2s spike -d --isa=RV32gc ./logs/test.elf 1>./logs/spike.out 2>./logs/spike.log &
+  timeout 2s spike -d --log-commits --isa=RV32gc ./logs/test.elf 1>./logs/spike.out 2>./logs/spike.log &
   spike_pid=$!
 
   # Wait for the background process to complete and get the exit code
