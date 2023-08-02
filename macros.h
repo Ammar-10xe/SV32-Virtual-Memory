@@ -1,7 +1,7 @@
 #include "encoding.h"
 
 #define SATP_SV32_MODE_VAL 0x01
-
+#define MSTATUS_MPS 0x00000800
 #define SREG sw
 #define LREG lw
 #define MRET mret
