@@ -1,7 +1,7 @@
 #################################################################################################           
 #                                                                                               #
 # Verification Goal: Test the Read acces in Supervisor mode for Level1 such that                #
-#                    (PTE.x = 1, PTE.r = 1, PTE.u=1)                                            #
+#                    (PTE.x = 1, PTE.r = 1, PTE.u=1 and mstatus.SUM=1)                          #
 #                                                                                               #
 # Description:       Read access to the PTE should be successful. So, the load works without    #
 #                    page fault and expected data is loaded from the memory                     #

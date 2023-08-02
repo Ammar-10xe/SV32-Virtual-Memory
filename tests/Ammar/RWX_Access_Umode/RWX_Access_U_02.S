@@ -1,7 +1,7 @@
 #################################################################################################           
 #                                                                                               #
 # Verification Goal: Test the Write Acces in Supervisor mode for Level1 such that               #
-#                    (PTE.x = 1, PTE.r = 1, PTE.u=1)                                            #
+#                    (PTE.w = 1, PTE.r = 1, PTE.u=1 and mstatus.SUM=1)                                            #
 #                                                                                               #
 # Description:       Write access to the PTE should be successful. So, store works without page #
 #                    fault and expected data is stored to the memory.                           #

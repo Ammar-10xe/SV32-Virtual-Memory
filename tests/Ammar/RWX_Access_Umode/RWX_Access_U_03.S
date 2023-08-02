@@ -1,7 +1,7 @@
 #################################################################################################           
 #                                                                                               #
 # Verification Goal: Test the Execute Acces in Supervisor mode for Level1 such that             #
-#                    (PTE.x = 1, PTE.r = 1, PTE.u=1)                                            #
+#                    (PTE.x = 1, PTE.v = 1, PTE.u=1 and mstatus.SUM=1 )                         #
 #                                                                                               #
 # Description:       Execute access should raise instruction page fault.                        #
 #                                                                                               #
@@ -29,7 +29,7 @@ _start:
     la a1,code                                                  # loads the address of label code
     GEN_VA(a1, a0, 0x100, 0x000)                                # generrates the VA for label code
     mv s1,a0                                                    # move VA to t2                    
-    ori a2, a2, (PTE_D | PTE_A | PTE_X | PTE_V )                # sets the permission bits
+    ori a2, a2, (PTE_D | PTE_A | PTE_U | PTE_X | PTE_V )        # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)                           # setup the PTE for level1
                         
     la a1,arr                                                   # loads the address of label arr
