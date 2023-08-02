@@ -27,7 +27,7 @@ _start:
     PMP_ALL_MEM                                                 # set the PMP permissions
     TRAP_HANDLER(trap_handler)                                  # set mtvec for trap
 
-    la a1,pgtb_l0                                               # loads the address of label code
+    la a1,pgtb_l0                                               # loads the  base address of pgtb0
     GEN_VA(a1, a0, 0x100, 0x000)                                # generrates the VA for label code                   
     ori a2, a2, ( PTE_V )                                       # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)                           # setup the PTE for level1
