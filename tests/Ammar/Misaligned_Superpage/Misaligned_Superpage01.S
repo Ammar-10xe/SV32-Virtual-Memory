@@ -1,7 +1,6 @@
 #################################################################################################           
 #                                                                                               #
-# Verification Goal: Test the Read acces in Supervisor mode for Level1 such that                #
-#                    (PTE.x = 1, PTE.r = 1, PTE.u=1 and mstatus.SUM=1)                          #
+# Verification Goal: Test the Read acces in Supervisor mode for Level1                          #
 #                                                                                               #
 # Description:       Read access to the PTE should raise load page fault for read access        #
 #                                                                                               #
