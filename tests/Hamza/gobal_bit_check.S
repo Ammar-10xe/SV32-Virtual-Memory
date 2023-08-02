@@ -15,40 +15,95 @@ _start:
 #    | M-mode Configurations and code |   #
 ###########################################
 
-    # Setting up page table with SV32 translation scheme
+    # Setting up the first page table Entry with physical address of code.
     la t1, pgtb_l0
     mv a1, t1
 
     GEN_VA(a1, a0, 0x280, 0x002)
-    li a2, 0x001
+    SET_PTE_V(a2, FLUSH)
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)
 
     la t1, code
     mv a1, t1
     GEN_VA(a1, a0, 0x280, 0x000)
     mv t3, a0
-    li a2, 0x0CF
+    SET_PTE_V(a2, FLUSH)
+    SET_PTE_X(a2, NO_FLUSH)
+    SET_PTE_X(a2, NO_FLUSH)
+    SET_PTE_A(a2, NO_FLUSH)
+    SET_PTE_W(a2, NO_FLUSH)
+    SET_PTE_R(a2, NO_FLUSH)
+    SET_PTE_D(a2, NO_FLUSH)
+    SET_PTE_V(a2, NO_FLUSH)
+    SET_PTE_G(a2, NO_FLUSH)
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
 
     la t1, arr
     mv a1, t1
     GEN_VA(a1, a0, 0x280, 0x004)
     mv t4, a0
-    li a2, 0x0C3
+    SET_PTE_V(a2, FLUSH)
+    SET_PTE_X(a2, NO_FLUSH)
+    SET_PTE_A(a2, NO_FLUSH)
+    SET_PTE_W(a2, NO_FLUSH)
+    SET_PTE_R(a2, NO_FLUSH)
+    SET_PTE_D(a2, NO_FLUSH)
+    SET_PTE_V(a2, NO_FLUSH)
+    SET_PTE_G(a2, NO_FLUSH)
+    PTE_SETUP_RV32(a1, a2, t1, a0, 0)
+    SATP_SETUP_SV32
+
+    # Setting up the Second page table Entry with physical address of code.
+    la t1, pgtb_l0
+    mv a1, t1
+
+    GEN_VA(a1, a0, 0x490, 0x002)
+    SET_PTE_V(a2, FLUSH)
+    PTE_SETUP_RV32(a1, a2, t1, a0, 1)
+
+    la t1, code
+    mv a1, t1
+    GEN_VA(a1, a0, 0x490, 0x000)
+    mv t5, a0
+    SET_PTE_V(a2, FLUSH)
+    SET_PTE_X(a2, NO_FLUSH)
+    SET_PTE_A(a2, NO_FLUSH)
+    SET_PTE_R(a2, NO_FLUSH)
+    SET_PTE_D(a2, NO_FLUSH)
+    SET_PTE_V(a2, NO_FLUSH)
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
 
-    # Test case 1: Write zero to satp in "bare" mode (should be ignored)
-    li t2, 0        # Write zero to satp
-    WRITE_CSR(satp, t2)
+    la t1, arr
+    mv a1, t1
+    GEN_VA(a1, a0, 0x490, 0x004)
+    mv t6, a0
+    SET_PTE_V(a2, FLUSH)
+    SET_PTE_X(a2, NO_FLUSH)
+    SET_PTE_A(a2, NO_FLUSH)
+    SET_PTE_W(a2, NO_FLUSH)
+    SET_PTE_R(a2, NO_FLUSH)
+    SET_PTE_D(a2, NO_FLUSH)
+    SET_PTE_V(a2, NO_FLUSH)
+    SET_PTE_G(a2, NO_FLUSH)
+    PTE_SETUP_RV32(a1, a2, t1, a0, 0)
+    SATP_SETUP_SV32
 
-    la t2, trap_handler
-    WRITE_CSR(mtvec, t2)
+#First Process uses the address
+    TRAP_HANDLER(trap_handler)            # set mtvec for trap
     WRITE_CSR(mepc, t3)
     li t2, 0x1800
     CLEAR_CSR(mstatus, t2)
     li t2, 0xC0800
     SET_CSR(mstatus, t2)
-    li t4, 0x444
+    MRET
+
+#Second Process uses the same physical address
+    TRAP_HANDLER(trap_handler)            # set mtvec for trap
+    WRITE_CSR(mepc, t5)
+    li t2, 0x1800
+    CLEAR_CSR(mstatus, t2)
+    li t2, 0xC0800
+    SET_CSR(mstatus, t2)
     MRET
 
     # Test case 2: Write non-zero value to satp in "bare" mode (should be ignored)
@@ -79,6 +134,7 @@ Test_case_3:
     MRET
 
 code:
+
     li t6, 1
 
 exit:
