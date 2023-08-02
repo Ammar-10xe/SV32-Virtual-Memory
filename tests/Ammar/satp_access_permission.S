@@ -1,9 +1,15 @@
-###############################################################################################
-#                                                                                             #
-# Verification Goals:Show that satp is only accessible in M and S mode and illegal            #  
-#                   instruction exception is generated when accessed in lower privilege mode  #
-# Description:      Access satp in M, S, and U mode using csrrw, csrrc, csrrs                 #
-###############################################################################################
+#################################################################################################           
+#                                                                                               #
+# Verification Goal:   SATP is accessible only in M and S mode not in U mode                    #
+#                                                                                               #
+# Description:         Satp is only accessible in M and S mode and illegal instruction          #
+#                      exception is generated when accessed in lower privilege mode             #
+#                                                                                               #
+# Sub Feature:         Access permission                                                        #                
+#                                                                                               #   
+# Feature Discription: Access satp in M, S, and U mode using csrrw, csrrc, csrrs                #   
+#                                                                                               #
+#################################################################################################   
 
 .include "./trap_handler.S"
 #include "../../macros.h"
@@ -12,55 +18,33 @@
 .global _start
 _start:
 
-###########################################
-#    | M-mode Configurations and code |   #
-###########################################
-    li t2, -1		                                            
-	csrw pmpaddr0, t2                                            
-	li t2, 0x0F		                                            
-	csrw pmpcfg0, t2                       #   PMP configration added                        
-
-    la     t1, trap_handler
-    csrw   mtvec, t1
-    j      machine_mode
+    PMP_ALL_MEM                    # set the PMP permissions
+    TRAP_HANDLER(trap_handler)     # set mtvec for trap 
+    li s1, ALL_F_S
+    li s2, SATP32_PPN
+    li s3, SATP32_ASID
 
 machine_mode:
 
-    li t1, 0x0000ffff
-    li t2, 0xffffffff
-    li t3, 0x12345678
-    csrrs  s1, satp, t1
-    csrrc  s2, satp, t2
-    csrrw  s3, satp, t3
-    la      t4, supervisor_mode // If SATP is accessible change M mode to S
-    CHANGE_T0_S_MODE(t4)    
+    CLEAR_CSR (satp,s1)
+    SET_CSR   (satp,s2)
+    WRITE_CSR (satp,s3)
+    la t4, supervisor_mode                             
+    CHANGE_T0_S_MODE(t4)           # changes mode from M to S
 
 supervisor_mode:
 
-    li t1, 0x0000ffff
-    li t2, 0xffffffff
-    li t3, 0x12345678
-    csrrs  s1, satp, t1
-    csrrc  s2, satp, t2
-    csrrw  s3, satp, t3
-    la t4,user_mode
-    CHANGE_T0_U_MODE(t4)  // If SATP is acchnagaecessible change mode to S
+    CLEAR_CSR (satp,s1)
+    SET_CSR   (satp,s2)
+    WRITE_CSR (satp,s3)
+    la t4, user_mode                
+    CHANGE_T0_U_MODE(t4)           # changes mode from S to U
 
 user_mode:
 
-    li t1, 0x0000ffff
-    li t2, 0xffffffff
-    li t3, 0x12345678
-    csrrs  s1, satp, t1
-    csrrc  s2, satp, t2
-    csrrw  s3, satp, t3
-
-exit:
-    la t0, tohost
-    li t1, 1
-    sw t1, 0(t0)
+    CLEAR_CSR (satp,s1)            # Illegal instruction exception is generated when accessed in U mode 
+    SET_CSR   (satp,s2)
+    WRITE_CSR (satp,s3)
     j exit
 
-.align 4; .global tohost;   tohost:   .dword 0;
-.align 4; .global fromhost; fromhost: .dword 0;
-
+RVTEST_EXIT_LOGIC               
