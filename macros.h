@@ -1010,3 +1010,13 @@
         .zero 4096                                                 ;
 
 
+    #define RVTEST_DATA_SECTION_MISALIGNED                         ;\
+    .data                                                          ;\
+    pgtb_l1:                                                       ;\
+        .zero 4096                                                 ;\
+    pgtb_l0:                                                       ;\
+        .zero 4096                                                 ;\
+   .align 12                                                       ;\
+    arr:                                                           ;\
+        .word 0x23                                                 ;
+        
