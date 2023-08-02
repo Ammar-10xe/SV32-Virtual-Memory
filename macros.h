@@ -207,7 +207,7 @@
     CLEAR_CSR (mstatus, t0)                                        ;\
     li  t1,MSTATUS_MPS                                             ;\
     li  t2, MSTATUS_SUM                                            ;\
-    or t3,t1,t2                                                    ;\
+    or  t3,t1,t2                                                   ;\
     SET_CSR   (mstatus,t3)                                         ;\
     WRITE_CSR (mepc,MEPC_ADDR)                                     ;\
     mret                                                           ;
