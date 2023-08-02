@@ -1,3 +1,77 @@
+#include "encoding.h"
+
+#define SATP_SV32_MODE_VAL 0x01
+#define MSTATUS_MPS 0x00000800
+#define SREG sw
+#define LREG lw
+#define MRET mret
+#define S_MODE 0x02
+#define U_MODE 0x00
+
+#define ENABLE_READ_CHECK 0x01
+#define DISABLE_READ_CHECK 0x00
+#define ENABLE_WRITE_CHECK 0x01
+#define DISABLE_WRITE_CHECK 0x00
+#define ENABLE_EXECUTE_CHECK 0x01
+#define DISBALE_EXECUTE_CHECK 0x00
+
+#define LEVEL0 0x00
+#define LEVEL1 0x01
+
+#define ACCESS_BIT_TEST 0x01
+#define VM_PMP_TEST     0x02
+#define VM_MXR_UNSET_TEST 0x03
+#define VM_SUM_UNSET_TEST 0x04
+#define VM_SATP_SV32_MODE_TEST 0x05
+
+#define REG_CLEAR 0x1
+#define NO_REG_CLEAR 0x0
+
+#define ALL_F_S 0xFFFFFFFF
+#define LHW_F_S 0x0000FFFF
+#define UHW_F_S 0xFFFF0000
+#define B1_F_S 0x000000FF
+#define B2_F_S 0x0000FF00
+#define B3_F_S 0x00FF0000
+#define B4_F_S 0xFF000000
+
+#define PMPADDR0 0x0
+#define PMPADDR1 0x1
+#define PMPADDR2 0x2
+#define PMPADDR3 0x3
+
+#define NAPOT_RANGE_8B 0x0
+#define NAPOT_RANGE_16B 0x01
+#define NAPOT_RANGE_32B 0x03
+
+#define PTE_OFFSET_SHIFT 12
+
+#define INSTRUCTION_ADDRESS_MISALIGNED 0
+#define INSTRUCTION_ACCESS_FAULT 1
+#define ILLEGAL_INSTRUCTION 2
+#define BREAKPOINT 3
+#define LOAD_ADDRESS_MISALIGNED 4
+#define LOAD_ACCESS_FAULT 5
+#define STORE_AMO_ADDRESS_MISALIGNED 6
+#define STORE_AMO_ACCESS_FAULT 7
+#define ENVIRONMENT_CALL_FROM_U_MODE 8
+#define ENVIRONMENT_CALL_FROM_S_MODE 9
+#define ENVIRONMENT_CALL_FROM_M_MODE 11
+#define INSTRUCTION_PAGE_FAULT 12
+#define LOAD_PAGE_FAULT 13
+#define STORE_AMO_PAGE_FAULT 15
+
+#define OP_READ 0x0
+#define OP_WRITE 0x1
+#define OP_EXECUTE 0x01
+
+#define _ARG5(_1ST,_2ND, _3RD,_4TH,_5TH,...) _5TH
+#define _ARG4(_1ST,_2ND, _3RD,_4TH,...) _4TH
+#define _ARG3(_1ST,_2ND, _3RD, ...) _3RD
+#define _ARG2(_1ST,_2ND, ...) _2ND
+#define _ARG1(_1ST,...) _1ST
+#define NARG(...) _ARG5(__VA_OPT__(__VA_ARGS__,)4,3,2,1,0)
+
 #define WRITE_MEPC(_TR1, LABEL)                                    ;\
     la _TR1, LABEL                                                 ;\
     WRITE_CSR(mepc, _TR1)                                          ;
@@ -934,4 +1008,5 @@
         .zero 4096                                                 ;\
     pgtb_l0:                                                       ;\
         .zero 4096                                                 ;
+
 
