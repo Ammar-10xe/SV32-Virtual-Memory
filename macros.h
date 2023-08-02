@@ -1035,3 +1035,21 @@
         .zero 4096                                                 ;
 
 
+    #define RVTEST_DATA_SECTION_MISALIGNED                         ;\
+    .data                                                          ;\
+    pgtb_l1:                                                       ;\
+        .zero 4096                                                 ;\
+    pgtb_l0:                                                       ;\
+        .zero 4096                                                 ;\
+   .align 12                                                       ;\
+    arr:                                                           ;\
+        .word 0x23                                                 ;
+        
+    #define RVTEST_EXIT_LOGIC                                     ;\
+    exit:                                                         ;\
+        la t0, tohost                                             ;\
+        li t1, 1                                                  ;\
+        sw t1, 0(t0)                                              ;\
+        j exit                                                    ;\
+    .align 4; .global tohost;   tohost:   .dword 0;               ;\
+    .align 4; .global fromhost; fromhost: .dword 0;               ;
