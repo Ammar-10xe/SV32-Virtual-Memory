@@ -1,11 +1,10 @@
 #################################################################################################           
 #                                                                                               #
-# Verification Goal: Test the Write Acces in Supervisor mode for Level0 such that               #
-#                    (PTE.w = 1, PTE.r = 1, PTE.u=1 and mstatus.SUM=1)                          #
+# Verification Goal: Test the Execute Acces in Supervisor mode for level0 such that             #
+#                    (PTE.x = 1, PTE.v = 1, PTE.u=1 and mstatus.SUM=1 )                         #
 #                                                                                               #
-# Description:       Write access to the PTE should be successful. So, store works without page #
-#                    fault and expected data is stored to the memory.                           #
-#                                                                                               #         
+# Description:       Execute access should raise instruction page fault.                        #
+#                                                                                               #
 #################################################################################################
 #                                                                                               #
 # Sub Feature:         RWX access on U-mode pages in S-mode with s/mstatus.SUM set              #                
@@ -28,18 +27,18 @@ _start:
     TRAP_HANDLER(trap_handler)                                  # set mtvec for trap
 
     la a1,pgtb_l0                                               # loads the  base address of pgtb0
-    GEN_VA(a1, a0, 0x100, 0x000)                                # generrates the VA for label code                   
-    ori a2, a2, (PTE_V)                                         # sets the permission bits
+    GEN_VA(a1, a0, 0x100, 0x000)                                # generrates the VA for label code                 
+    ori a2, a2, ( PTE_V )        # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)                           # setup the PTE for level0
 
     la a1,code                                                  # loads the address of label code
     GEN_VA(a1, a0, 0x100, 0x000)                                # generrates the VA for label code
     mv s1,a0                                                    # move VA to t2                    
-    ori a2, a2, (PTE_D | PTE_A | PTE_X | PTE_V )                # sets the permission bits
+    ori a2, a2, (PTE_D | PTE_A | PTE_U | PTE_X | PTE_V )        # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)                           # setup the PTE for level0
                         
     la a1,arr                                                   # loads the address of label arr
-    GEN_VA(a1, a0, 0x100, 0x010)                                # generrates the VA for label arr
+    GEN_VA(a1, a0, 0x200, 0x010)                                # generrates the VA for label arr
     mv s2,a0                                                    # move VA to t3
     ori a2, a2, (PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V) # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)                           # setup the PTE for level0   
