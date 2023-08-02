@@ -1,8 +1,9 @@
+
 #################################################################################################           
 #                                                                                               #
-# Verification Goal: Test the execute acces in Supervisor mode for Level1                       #
+# Verification Goal: Test the Execute acces in User mode for Level1                             #
 #                                                                                               #
-# Description:       Execute access to the PTE should raise instruction page fault              #
+# Description:       Execute access to the PTE should raise store/AMO page fault                #
 #                                                                                               #
 #################################################################################################
 #                                                                                               #
@@ -26,22 +27,22 @@ _start:
     la a1,code                                                  # loads the address of label code
     GEN_VA(a1, a0, 0x100, 0x000)                                # generrates the VA for label code
     mv s1,a0                                                    # move VA to s1                    
-    ori a2, a2, ( PTE_D | PTE_A | PTE_X | PTE_V )                               # sets the permission bits
+    ori a2, a2, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_V )       # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)                           # setup the PTE for level1
                         
     la a1,arr                                                   # loads the address of label arr
     GEN_VA(a1, a0, 0x200, 0x000)                                # generrates the VA for label arr
     mv s2,a0                                                    # move VA to t3
-    ori a2, a2, (PTE_D | PTE_A | PTE_W | PTE_R | PTE_V)         # sets the permission bits
+    ori a2, a2, (PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V) # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)                           # setup the PTE for level1   
                            
     SATP_SETUP_SV32                                             # set the SATP for virtualization
-    CHANGE_T0_S_MODE(s1)                                        # change mode M to S and set the MEPC value to s1   
+    CHANGE_T0_U_MODE(s1)                                        # change mode M to U and set the MEPC value to s1       
 
 .align 16                                                       # to make the ppn[0] of code misalligned
 
-code: 
-    li t1, 10                                                   # test the Execute Acces in Supervisor mode for Level1 PTE 
+code:    
+    li t1, 10                                                   # test the ExecuteAcces in User mode for Level1 PTE 
     READ_CSR (mcause, s1)                                       # exception to go back to M mode 
     
 exit:
