@@ -206,11 +206,36 @@
     add      TMP, TMP, VA                                          ;\
     SREG     PA,  0(TMP)                                           ;
 
+#define PTE2_SETUP_RV32(PA, PR, TMP, VA, level)                     ;\
+    PTE(PA, PR)                                                    ;\
+    .if (level==1)                                                 ;\
+        la   TMP, pgtb2_l1                                          ;\
+        srli VA,  VA, 22                                           ;\
+    .endif                                                         ;\
+    .if (level==0)                                                 ;\
+        la   TMP, pgtb2_l0                                          ;\
+        slli VA,  VA, 10                                           ;\
+        srli VA,  VA, 22                                           ;\
+    .endif                                                         ;\
+    slli     VA,  VA,  2                                           ;\
+    add      TMP, TMP, VA                                          ;\
+    SREG     PA,  0(TMP)                                           ;
+
 #define SATP_SETUP_SV32                                            ;\
     la   t6,   pgtb_l1                                             ;\
     li   t5,   SATP32_MODE                                         ;\
     srli t6,   t6, 12                                              ;\
     or   t6,   t6, t5                                              ;\
+    WRITE_CSR(satp, t6)                                            ;
+
+#define SATP_SETUP2_SV32                                            ;\
+    la   t6,   pgtb2_l1                                             ;\
+    li   t5,   SATP32_MODE                                         ;\
+    srli t6,   t6, 12                                              ;\
+    or   t6,   t6, t5                                              ;\
+    li s5,1                                                        ;\
+    slli s5,s5, 22                                                 ;\
+    or t6, t6, s5                                                  ;\
     WRITE_CSR(satp, t6)                                            ;
 
 #define EXIT_LOGIC(REG, VAL)                                       ;\
