@@ -255,7 +255,7 @@
 #define CHANGE_T0_S_MODE(MEPC_ADDR)                                ;\
     li        t0, MSTATUS_MPP                                      ;\
     CLEAR_CSR (mstatus, t0)                                        ;\
-    li t1,  0x800                       ;\
+    li t1,    MSTATUS_MPS                                          ;\
     SET_CSR   (mstatus,t1)                                         ;\
     WRITE_CSR (mepc,MEPC_ADDR)                                     ;\
     mret                                                           ;
