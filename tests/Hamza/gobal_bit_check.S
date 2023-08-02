@@ -6,9 +6,12 @@
 .text
 .globl _start
 _start:
+
+
+
 #Setting pmp bits for all memory
     PMP_ALL_MEM
-############################
+###########################################
 #    | M-mode Configurations and code |   #
 ###########################################
 
