@@ -1027,7 +1027,6 @@
     .endif                                                         ;\
     SET_CSR (mstatus, t2)                                          ;\
     MRET                                                           ;\
-    supetrap_handlerrvisor_code:                                   ;\
     li t1, 0x45                                                    ;\
     .if(R == 1)                                                    ;\
         lw t1, 0(t4)                                               ;\
