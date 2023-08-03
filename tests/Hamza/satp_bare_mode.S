@@ -17,31 +17,41 @@ _start:
     mv a1, t1
 
     GEN_VA(a1, a0, 0x280, 0x002)
-    li a2, 0x001
+    SET_PTE_V(a2, FLUSH)
     PTE_SETUP_RV32(a1, a2, t1, a0, 1)
 
     la t1, code
     mv a1, t1
     GEN_VA(a1, a0, 0x280, 0x000)
     mv t3, a0
-    li a2, 0x0CF
+    SET_PTE_V(a2, FLUSH)
+    SET_PTE_X(a2, NO_FLUSH)
+    SET_PTE_A(a2, NO_FLUSH)
+    SET_PTE_W(a2, NO_FLUSH)
+    SET_PTE_R(a2, NO_FLUSH)
+    SET_PTE_D(a2, NO_FLUSH)
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
 
     la t1, arr
     mv a1, t1
     GEN_VA(a1, a0, 0x280, 0x004)
     mv t4, a0
-    li a2, 0x0C3
+    SET_PTE_V(a2, FLUSH)
+    SET_PTE_X(a2, NO_FLUSH)
+    SET_PTE_A(a2, NO_FLUSH)
+    SET_PTE_W(a2, NO_FLUSH)
+    SET_PTE_R(a2, NO_FLUSH)
+    SET_PTE_D(a2, NO_FLUSH)
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
 
     # Test case 1: Write zero to satp in "bare" mode (should be ignored)
-    li t2, 0        # Write zero to satp
+    li t2,SATP32_MODE<<1        # Write zero to satp
     WRITE_CSR(satp, t2)
 
-    la t2, trap_handler
+    TRAP_HANDLER(trap_handler)            # set mtvec for trap
     WRITE_CSR(mtvec, t2)
     WRITE_CSR(mepc, t3)
-    li t2, 0x1800
+    li t2, MSTATUS_MPP
     CLEAR_CSR(mstatus, t2)
     li t2, 0xC0800
     SET_CSR(mstatus, t2)
@@ -54,7 +64,7 @@ Test_case_2:
     WRITE_CSR(satp, t2)
 
     WRITE_CSR(mepc, t3)
-    li t2, 0x1800
+    li t2, MSTATUS_MPP
     CLEAR_CSR(mstatus, t2)
     li t2, 0xC0800
     SET_CSR(mstatus, t2)
@@ -68,7 +78,7 @@ Test_case_3:
 
     la t3, code
     WRITE_CSR(mepc, t3)
-    li t2, 0x1800
+    li t2, MSTATUS_MPP
     CLEAR_CSR(mstatus, t2)
     li t2, 0xC0800
     SET_CSR(mstatus, t2)
@@ -90,8 +100,6 @@ pgtb_l1:
     .zero 4096
 .align 12
 pgtb_l0:
-    .zero 4096
-pgtb_l0_1:
     .zero 4096
 arr:
     .word 0x23
