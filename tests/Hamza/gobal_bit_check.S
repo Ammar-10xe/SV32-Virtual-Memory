@@ -1,7 +1,7 @@
 # Test to show writing {zero, non-zero} value to satp when mode=bare and the behavior follows the design implementation.
 
 #include "../../macros.h"
-.include "./trap_handler_bare_mode.S"
+.include "./trap_handler.S"
 
 .text
 .globl _start
@@ -29,12 +29,10 @@ _start:
     mv t3, a0
     SET_PTE_V(a2, FLUSH)
     SET_PTE_X(a2, NO_FLUSH)
-    SET_PTE_X(a2, NO_FLUSH)
     SET_PTE_A(a2, NO_FLUSH)
     SET_PTE_W(a2, NO_FLUSH)
     SET_PTE_R(a2, NO_FLUSH)
     SET_PTE_D(a2, NO_FLUSH)
-    SET_PTE_V(a2, NO_FLUSH)
     SET_PTE_G(a2, NO_FLUSH)
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
 
@@ -48,119 +46,64 @@ _start:
     SET_PTE_W(a2, NO_FLUSH)
     SET_PTE_R(a2, NO_FLUSH)
     SET_PTE_D(a2, NO_FLUSH)
-    SET_PTE_V(a2, NO_FLUSH)
-    SET_PTE_G(a2, NO_FLUSH)
+    SET_PTE_U(a2, NO_FLUSH)
     PTE_SETUP_RV32(a1, a2, t1, a0, 0)
-    SATP_SETUP_SV32
 
     # Setting up the Second page table Entry with physical address of code.
-    la t1, pgtb_l0
+    la t1,pgtb2_l0
     mv a1, t1
 
-    GEN_VA(a1, a0, 0x490, 0x002)
+    GEN_VA(a1, a0, 0x280, 0x002)
     SET_PTE_V(a2, FLUSH)
-    PTE_SETUP_RV32(a1, a2, t1, a0, 1)
+    PTE2_SETUP_RV32(a1, a2, t1, a0, 1)
 
-    la t1, code
+    la t1, code1
     mv a1, t1
-    GEN_VA(a1, a0, 0x490, 0x000)
-    mv t5, a0
+    GEN_VA(a1, a0, 0x280, 0x000)
+    mv s6, a0
     SET_PTE_V(a2, FLUSH)
-    SET_PTE_X(a2, NO_FLUSH)
-    SET_PTE_A(a2, NO_FLUSH)
-    SET_PTE_R(a2, NO_FLUSH)
     SET_PTE_D(a2, NO_FLUSH)
-    SET_PTE_V(a2, NO_FLUSH)
-    PTE_SETUP_RV32(a1, a2, t1, a0, 0)
+    PTE2_SETUP_RV32(a1, a2, t1, a0, 0)
 
-    la t1, arr
-    mv a1, t1
-    GEN_VA(a1, a0, 0x490, 0x004)
-    mv t6, a0
-    SET_PTE_V(a2, FLUSH)
-    SET_PTE_X(a2, NO_FLUSH)
-    SET_PTE_A(a2, NO_FLUSH)
-    SET_PTE_W(a2, NO_FLUSH)
-    SET_PTE_R(a2, NO_FLUSH)
-    SET_PTE_D(a2, NO_FLUSH)
-    SET_PTE_V(a2, NO_FLUSH)
-    SET_PTE_G(a2, NO_FLUSH)
-    PTE_SETUP_RV32(a1, a2, t1, a0, 0)
+    #First Process uses the address
+    TRAP_HANDLER(trap_handler)            # set mtvec for trap
+    WRITE_CSR(mepc, t3)
+    li t2, MSTATUS_MPP
+    CLEAR_CSR(mstatus, t2)
+    li t2, 0xC0800
+    SET_CSR(mstatus, t2)
     SATP_SETUP_SV32
-
-#First Process uses the address
-    TRAP_HANDLER(trap_handler)            # set mtvec for trap
-    WRITE_CSR(mepc, t3)
-    li t2, 0x1800
-    CLEAR_CSR(mstatus, t2)
-    li t2, 0xC0800
-    SET_CSR(mstatus, t2)
     MRET
 
-#Second Process uses the same physical address
-    TRAP_HANDLER(trap_handler)            # set mtvec for trap
-    WRITE_CSR(mepc, t5)
-    li t2, 0x1800
-    CLEAR_CSR(mstatus, t2)
-    li t2, 0xC0800
-    SET_CSR(mstatus, t2)
-    MRET
 
-    # Test case 2: Write non-zero value to satp in "bare" mode (should be ignored)
-Test_case_2:
-    li t2, 0x123    # Write non-zero value to satp
-    WRITE_CSR(satp, t2)
 
-    WRITE_CSR(mepc, t3)
-    li t2, 0x1800
-    CLEAR_CSR(mstatus, t2)
-    li t2, 0xC0800
-    SET_CSR(mstatus, t2)
-    li t4, 0x555
-    MRET
-
-# Test case 3:
-Test_case_3:
-    li t2, 0x123    # Write non-zero value to satp
-    WRITE_CSR(satp, t2)
-
-    la t3, code
-    WRITE_CSR(mepc, t3)
-    li t2, 0x1800
-    CLEAR_CSR(mstatus, t2)
-    li t2, 0xC0800
-    SET_CSR(mstatus, t2)
-    li t4, 0x666
-    MRET
 
 code:
-
     li t6, 1
-
+    SATP_SETUP2_SV32
+    li s7, SSTATUS_SPP
+    csrw sstatus, s7
+    csrw sepc ,s6
+    sret
+code1:
+    li t6, 1
+    csrr s8,mepc
 exit:
     la t0, tohost
     li t1, 1
     EXIT_LOGIC(t0, t1)
     j exit
 
-.data
-
-pgtb_l1:
-    .zero 4096
-.align 12
-pgtb_l0:
-    .zero 4096
-pgtb_l0_1:
-    .zero 4096
 arr:
     .word 0x23
-
-.align 4
-.globl tohost
-tohost:
-    .dword 0
-
-.align 4
-.globl fromhost
-fromhost:
-    .dword 0
+.align 4; .global tohost;   tohost:   .dword 0;
+.align 4; .global fromhost; fromhost: .dword 0;
+.align 24
+pgtb_l1:
+    .zero 4096
+pgtb_l0:
+    .zero 4096
+pgtb2_l1:
+    .zero 4096
+pgtb2_l0:
+    .zero 4096
