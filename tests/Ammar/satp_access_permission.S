@@ -11,7 +11,6 @@
 #                                                                                               #
 #################################################################################################   
 
-.include "./trap_handler.S"
 #include "../../macros.h"
 
 .text
@@ -19,12 +18,13 @@
 _start:
 
     ALL_MEM_PMP                    # set the PMP permissions
-    TRAP_HANDLER(trap_handler)     # set mtvec for trap 
+    TRAP_HANDLER(trap_handler)     # set mtvec for trap
     li s1, ALL_F_S
     li s2, SATP32_PPN
     li s3, SATP32_ASID
-    li s4, INSTRUCTION_ACCESS_FAULT
-    
+    la s10, user_mode               
+    li s11, INSTRUCTION_ACCESS_FAULT
+
 machine_mode:
 
     CLEAR_CSR (satp,s1)
@@ -48,4 +48,8 @@ user_mode:
     WRITE_CSR (satp,s3)
     j exit
 
-RVTEST_EXIT_LOGIC               
+ABit_trap_handler                 # trap handler      
+RVTEST_EXIT_LOGIC                 # exit logic  
+
+.align 4; .global tohost;   tohost:   .dword 0;                    
+.align 4; .global fromhost; fromhost: .dword 0;    
