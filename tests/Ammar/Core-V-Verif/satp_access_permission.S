@@ -11,11 +11,11 @@
 #                                                                                               #
 #################################################################################################   
 
-#include "../../macros.h"
+#include "macros.h"
 
 .text
-.global _start
-_start:
+.global rvtest_entry_point
+rvtest_entry_point:
 
     ALL_MEM_PMP                    # set the PMP permissions
     TRAP_HANDLER(trap_handler)     # set mtvec for trap
@@ -49,7 +49,8 @@ user_mode:
     j exit
 
 ABit_trap_handler                 # trap handler      
-RVTEST_EXIT_LOGIC                 # exit logic  
+COREV_VERIF_EXIT_LOGIC            # exit logic  
 
+.data
 .align 4; .global tohost;   tohost:   .dword 0;                    
 .align 4; .global fromhost; fromhost: .dword 0;    
