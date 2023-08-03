@@ -500,7 +500,7 @@
     wrong_excep:                                                   ;\
         li x1, 1                                                   ;\
         la s1, tohost                                              ;\
-        j exi                                                      ;
+        j exit                                                     ;
 
 #define TEST_DIRTY_BIT(MODE, LEVEL, R, W, X, XD, D)                ;\
     li t2, -1                                                      ;\

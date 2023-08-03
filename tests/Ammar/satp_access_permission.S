@@ -18,12 +18,13 @@
 .global _start
 _start:
 
-    PMP_ALL_MEM                    # set the PMP permissions
+    ALL_MEM_PMP                    # set the PMP permissions
     TRAP_HANDLER(trap_handler)     # set mtvec for trap 
     li s1, ALL_F_S
     li s2, SATP32_PPN
     li s3, SATP32_ASID
-
+    li s4, INSTRUCTION_ACCESS_FAULT
+    
 machine_mode:
 
     CLEAR_CSR (satp,s1)
