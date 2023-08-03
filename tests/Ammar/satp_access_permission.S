@@ -23,7 +23,7 @@ _start:
     li s2, SATP32_PPN
     li s3, SATP32_ASID
     la s10, user_mode               
-    li s11, INSTRUCTION_ACCESS_FAULT
+    li s11, ILLEGAL_INSTRUCTION
 
 machine_mode:
 
