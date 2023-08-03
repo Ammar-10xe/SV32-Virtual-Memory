@@ -1,7 +1,6 @@
 # Test to show writing {zero, non-zero} value to satp when mode=bare and the behavior follows the design implementation.
 
 #include "../../macros.h"
-.include "./trap_handler.S"
 
 .text
 .globl rvtest_entry_point
@@ -85,6 +84,8 @@ code:
 code1:
     li t6, 1
     csrr s8,mepc
+
+ABit_trap_handler                 # trap handler
 
 exit:
 	slli x1, x1, 1

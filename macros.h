@@ -1145,7 +1145,7 @@ exit:                                                              ;\
 	sw x1, tohost, x30                                             ;\
 	self_loop: j self_loop                                         ;
 
-    
+
 #define PTE2_SETUP_RV32(PA, PR, TMP, VA, level)                     ;\
     PTE(PA, PR)                                                    ;\
     .if (level==1)                                                 ;\
@@ -1175,3 +1175,132 @@ exit:                                                              ;\
 #define ERROR1 0x444
 #define ERROR2 0x555
 #define ERROR3 0x666
+
+
+
+#define TEST_PTE_VM_PMP_CHECK(MODE, LEVEL, R, W, X, A)         ;\
+    li t2, 0x80000800		                                       ;\
+    srli t2, t2, 2;\
+	csrw pmpaddr0, t2                                              ;\
+    li t2, 0x82000000		                                       ;\
+    srli t2, t2, 2;\
+	csrw pmpaddr1, t2                                              ;\
+    li t2, 0x84000000		                                       ;\
+    srli t2, t2, 2;\
+	csrw pmpaddr2, t2                                              ;\
+    la t2, test_seg		                                           ;\
+    srli t2, t2, 2;\
+    ori t2, t2, 0x0 ;\
+	csrw pmpaddr3, t2                                              ;\
+    .if((R|W)==0&X==1) ;\
+	    li t2, 0x1F0B000F		                                   ;\
+    .endif;\
+    .if(R==0);\
+        .if(W==1);\
+        li t2, 0x1F0D000F		                                   ;\
+        .endif;\
+    .endif;\
+    .if(R==1);\
+        .if(W==0);\
+        li t2, 0x1F0E000F		                                   ;\
+        .endif;\
+    .endif;\
+	csrw pmpcfg0, t2                                               ;\
+    li t2, 0x23;\
+    la t1, test_seg;\
+    sw t2, 0(t1);\
+    .if(LEVEL == 0)                                                ;\
+        la a1, pgtb_l0                                             ;\
+        GEN_VA(a1, a0, 0x003, 0x002)                               ;\
+        SET_PTE_V(a2, FLUSH)                                       ;\
+        PTE_SETUP_RV32(a1, a2, t1, a0, 1)                          ;\
+    .endif                                                         ;\
+    .if(MODE == S_MODE)                                            ;\
+        la a1, supervisor_code                                     ;\
+    .else                                                          ;\
+        la a1, user_code                                           ;\
+        SET_PTE_U(a2, FLUSH)                                       ;\
+    .endif                                                         ;\
+    GEN_VA(a1, a0, 0x003, 0x000)                                   ;\
+    mv t3, a0                                                      ;\
+    .if(X == 1)                                                    ;\
+        SET_PTE_X(a2, NO_FLUSH)                                    ;\
+    .endif                                                         ;\
+    SET_PTE_A(a2, NO_FLUSH)                                        ;\
+    SET_PTE_W(a2, NO_FLUSH)                                        ;\
+    SET_PTE_R(a2, NO_FLUSH)                                        ;\
+    SET_PTE_D(a2, NO_FLUSH)                                        ;\
+    SET_PTE_V(a2, NO_FLUSH)                                        ;\
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL)                          ;\
+    la a1, test_seg                                                ;\
+    .if(LEVEL == 0)                                                ;\
+        GEN_VA(a1, a0, 0x003, 0x004)                               ;\
+    .else                                                          ;\
+        GEN_VA(a1, a0, 0x004, 0x000)                               ;\
+    .endif                                                         ;\
+    mv t4, a0                                                      ;\
+    .if(R == 1)                                                    ;\
+        SET_PTE_R(a2, FLUSH)                                       ;\
+    .endif                                                         ;\
+    .if(W == 1)                                                    ;\
+        SET_PTE_W(a2, NO_FLUSH)                                    ;\
+    .endif                                                         ;\
+    .if(A == 1)                                                    ;\
+        SET_PTE_A(a2, NO_FLUSH)                                    ;\
+    .endif                                                         ;\
+    SET_PTE_D(a2, NO_FLUSH)                                        ;\
+    SET_PTE_V(a2, NO_FLUSH)                                        ;\
+    .if(MODE == U_MODE)                                            ;\
+        SET_PTE_U(a2, NO_FLUSH)                                    ;\
+    .endif                                                         ;\
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL)                          ;\
+    la t1, tohost                                                  ;\
+    mv a1, t1                                                      ;\
+    .if(LEVEL == 0)                                                ;\
+        GEN_VA(a1, a0, 0x003, 0x005)                               ;\
+    .else                                                          ;\
+        GEN_VA(a1, a0, 0x005, 0x000)                               ;\
+    .endif                                                         ;\
+    mv s1, a0                                                      ;\
+    SET_RWXV_BITS(a2, FLUSH)                                       ;\
+    SET_PTE_A(a2, NO_FLUSH)                                        ;\
+    SET_PTE_D(a2, NO_FLUSH)                                        ;\
+    .if(MODE == U_MODE)                                            ;\
+        SET_PTE_U(a2, NO_FLUSH)                                    ;\
+    .endif                                                         ;\
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL)                          ;\
+    SATP_SETUP_SV32                                                ;\
+    la t2, trap_handler                                            ;\
+    WRITE_CSR (mtvec, t2)                                          ;\
+    WRITE_CSR (mepc, t3)                                           ;\
+    li t2, 0x1800                                                  ;\
+    CLEAR_CSR (mstatus, t2)                                        ;\
+    .if(MODE == S_MODE)                                            ;\
+        li t2,  0x00800                                            ;\
+    .else                                                          ;\
+        li t2, 0xC0000                                             ;\
+    .endif                                                         ;\
+    SET_CSR (mstatus, t2)                                          ;\
+    MRET                                                           ;\
+    supervisor_code:                                               ;\
+    li t1, 0x45                                                    ;\
+    .if(R == 1)                                                    ;\
+        lw t1, 0(t4)                                               ;\
+    .endif                                                         ;\
+    .if(W == 1)                                                    ;\
+        sw t1, 0(t4)                                               ;\
+    .endif                                                         ;\
+    j exit                                                         ;\
+    user_code:                                                     ;\
+    li t1, 0x45                                                    ;\
+    .if(R == 1)                                                    ;\
+        lw t1, 0(t4)                                               ;\
+    .endif                                                         ;\
+    .if(W == 1)                                                    ;\
+        sw t1, 0(t4)                                               ;\
+    .endif                                                         ;\
+    li x1, 1                                                       ;\
+    j exit                                                         ;
+
+
+
