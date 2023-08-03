@@ -259,7 +259,7 @@
 #define CHANGE_T0_S_MODE(MEPC_ADDR)                                ;\
     li        t0, MSTATUS_MPP                                      ;\
     CLEAR_CSR (mstatus, t0)                                        ;\
-    li  t1,MSTATUS_MPS                                             ;\
+    li  t1, MSTATUS_MPP & ( MSTATUS_MPP >> 1)                      ;\
     li  t2, MSTATUS_SUM                                            ;\
     or t3,t1,t2                                                    ;\
     SET_CSR   (mstatus,t3)                                         ;\
@@ -1129,3 +1129,20 @@
         sw t1, 0(t4)                                               ;\
     .endif                                                         ;\
     j exit                                                         ;
+
+#define RVTEST_EXIT_LOGIC                                          ;\
+exit:                                                              ;\
+    la t0, tohost                                                  ;\
+    li t1, 1                                                       ;\
+    EXIT_LOGIC(t0, t1)                                             ;\
+    j exit                                                         ;
+
+#define COREV_VERIF_EXIT_LOGIC                                     ;\
+exit:                                                              ;\
+	slli x1, x1, 1                                                 ;\
+    addi x1, x1, 1                                                 ;\
+    mv x30, s1                                                     ;\
+	sw x1, tohost, x30                                             ;\
+	self_loop: j self_loop                                         ;
+
+    
