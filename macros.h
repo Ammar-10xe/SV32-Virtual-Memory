@@ -210,36 +210,11 @@
     add      TMP, TMP, VA                                          ;\
     SREG     PA,  0(TMP)                                           ;
 
-#define PTE2_SETUP_RV32(PA, PR, TMP, VA, level)                     ;\
-    PTE(PA, PR)                                                    ;\
-    .if (level==1)                                                 ;\
-        la   TMP, pgtb2_l1                                          ;\
-        srli VA,  VA, 22                                           ;\
-    .endif                                                         ;\
-    .if (level==0)                                                 ;\
-        la   TMP, pgtb2_l0                                          ;\
-        slli VA,  VA, 10                                           ;\
-        srli VA,  VA, 22                                           ;\
-    .endif                                                         ;\
-    slli     VA,  VA,  2                                           ;\
-    add      TMP, TMP, VA                                          ;\
-    SREG     PA,  0(TMP)                                           ;
-
 #define SATP_SETUP_SV32                                            ;\
     la   t6,   pgtb_l1                                             ;\
     li   t5,   SATP32_MODE                                         ;\
     srli t6,   t6, 12                                              ;\
     or   t6,   t6, t5                                              ;\
-    WRITE_CSR(satp, t6)                                            ;
-
-#define SATP_SETUP2_SV32                                            ;\
-    la   t6,   pgtb2_l1                                             ;\
-    li   t5,   SATP32_MODE                                         ;\
-    srli t6,   t6, 12                                              ;\
-    or   t6,   t6, t5                                              ;\
-    li s5,1                                                        ;\
-    slli s5,s5, 22                                                 ;\
-    or t6, t6, s5                                                  ;\
     WRITE_CSR(satp, t6)                                            ;
 
 #define EXIT_LOGIC(REG, VAL)                                       ;\
@@ -284,8 +259,10 @@
 #define CHANGE_T0_S_MODE(MEPC_ADDR)                                ;\
     li        t0, MSTATUS_MPP                                      ;\
     CLEAR_CSR (mstatus, t0)                                        ;\
-    li t1,  0x800                       ;\
-    SET_CSR   (mstatus,t1)                                         ;\
+    li  t1,MSTATUS_MPS                                             ;\
+    li  t2, MSTATUS_SUM                                            ;\
+    or t3,t1,t2                                                    ;\
+    SET_CSR   (mstatus,t3)                                         ;\
     WRITE_CSR (mepc,MEPC_ADDR)                                     ;\
     mret                                                           ;
 
@@ -529,11 +506,7 @@
     wrong_excep:;\
         li x1, 1                                                   ;\
         la s1, tohost                                              ;\
-<<<<<<< HEAD
         j exit;
-=======
-        j exit                                                     ;
->>>>>>> 16b1a188336f6677b94c52ee10d0f2e47ff8cd4a
 
 #define TEST_DIRTY_BIT(MODE, LEVEL, R, W, X, XD, D)                ;\
     li t2, -1                                                      ;\
