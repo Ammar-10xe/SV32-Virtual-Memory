@@ -1,8 +1,8 @@
 #################################################################################################           
 #                                                                                               #
-# Verification Goal: Set PTE.V = 0 and test the Read Acces in Supervisor mode for Level1        #
+# Verification Goal: Set PTE.V = 0 and test the write Acces in Supervisor mode for Level1       #
 #                                                                                               #
-# Description:                - load page fault for read access.                                #    
+# Description:                - store/AMO page fault for write access.                          #    
 #                                                                                               #
 #################################################################################################
 #                                                                                               #
