@@ -455,9 +455,9 @@
 #define ABit_trap_handler                                          ;\
     trap_handler:                                                  ;\
         csrr  t0,    mcause                                        ;\
-        bne   t0, s4, wrong_excep;\
-        csrr  s4, mepc;\
-        bne   t3, s4, wrong_excep;\
+        bne   t0, s11, wrong_excep;\
+        csrr  s11, mepc;\
+        bne   s10, s4, wrong_excep;\
         li    t1,   1                                              ;\
         beq   t0,   t1, instruction_access_fault                   ;\
         li    t1,   2                                              ;\
