@@ -17,7 +17,6 @@
 #                                                                                               #
 #################################################################################################   
 
-.include "./trap_handler.S"
 #include "../../../macros.h"
 
 .text
@@ -26,6 +25,8 @@ _start:
 
     PMP_ALL_MEM                                                 # set the PMP permissions
     TRAP_HANDLER(trap_handler)                                  # set mtvec for trap
+    li s11, ILLEGAL_INSTRUCTION                             
+main:
 
     la a1,pgtb_l0                                               # loads the  base address of pgtb0
     GEN_VA(a1, a0, 0x100, 0x000)                                # generrates the VA for label code                   
@@ -34,34 +35,30 @@ _start:
 
     la a1,code                                                  # loads the address of label code
     GEN_VA(a1, a0, 0x100, 0x000)                                # generrates the VA for label code
-    mv s1,a0                                                    # move VA to s1                    
+    mv s5,a0                                                    # move VA to t2         
+    mv s10,s5                                                   # move the VA of label code to s10 
+    CLEAR_REG(a2)                                               # clear the reg a2                   
     ori a2, a2, (PTE_D | PTE_A | PTE_X | PTE_V )                # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, 0)                           # setup the PTE for level0
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                      # setup the PTE for level1
                         
     la a1,arr                                                   # loads the address of label arr
     GEN_VA(a1, a0, 0x100, 0x010)                                # generrates the VA for label arr
-    mv s2,a0                                                    # move VA to s2
+    mv s6,a0                                                    # move VA to t3
+    CLEAR_REG(a2)                                               # clear the reg a2    
     ori a2, a2, (PTE_D | PTE_A | PTE_X | PTE_U | PTE_R | PTE_V) # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, 0)                           # setup the PTE for level0  
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                      # setup the PTE for level1   
                            
     SATP_SETUP_SV32                                             # set the SATP for virtualization
-    CHANGE_T0_S_MODE(s1)                                        # change mode M to S and set the MEPC value to s1      
+    CHANGE_T0_S_MODE(s5)                                        # change mode M to S and set the MEPC value to t2       
          
-code:                                         
-    lw t1,0(s2)                                                 # test the Read Acces in Supervisor mode for Level0 PTE 
-    READ_CSR (mcause, t2)                                       # exception to go back to M mode 
-    
-exit:
-    la t0, tohost
-    li t1, 1
-    sw t1, 0(t0)
+code:             
+    li t1,ALL_F_S                            
+    lw t1,0(s6)                                                 # test the Read Acces in Supervisor mode for Level1 PTE 
     j exit
 
-RVTEST_DATA_SECTION                                                                              
+ABit_trap_handler                                               # trap handler  
+RVTEST_EXIT_LOGIC                                               # exit logic 
+RVTEST_DATA_SECTION                                             # data section                                 
 
 .align 4; .global tohost;   tohost:   .dword 0;
 .align 4; .global fromhost; fromhost: .dword 0;
-
-
-
-
