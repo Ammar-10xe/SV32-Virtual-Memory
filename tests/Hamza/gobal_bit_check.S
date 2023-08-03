@@ -4,9 +4,8 @@
 .include "./trap_handler.S"
 
 .text
-.globl _start
-_start:
-
+.globl rvtest_entry_point
+rvtest_entry_point:
 
 
 #Setting pmp bits for all memory
@@ -70,12 +69,10 @@ _start:
     WRITE_CSR(mepc, t3)
     li t2, MSTATUS_MPP
     CLEAR_CSR(mstatus, t2)
-    li t2, 0xC0800
+    li t2, ( MSTATUS_SUM | MSTATUS_MXR | (MSTATUS_MPP & (MSTATUS_MPP >> 1)))
     SET_CSR(mstatus, t2)
     SATP_SETUP_SV32
     MRET
-
-
 
 
 code:
@@ -88,11 +85,13 @@ code:
 code1:
     li t6, 1
     csrr s8,mepc
+
 exit:
-    la t0, tohost
-    li t1, 1
-    EXIT_LOGIC(t0, t1)
-    j exit
+	slli x1, x1, 1
+	addi x1, x1, 1
+    mv x30, s1
+	sw x1, tohost, x30
+	self_loop: j self_loop
 
 arr:
     .word 0x23
