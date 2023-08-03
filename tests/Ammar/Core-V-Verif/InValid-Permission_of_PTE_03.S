@@ -1,10 +1,17 @@
-###############################################################################################
-#                                                                                             #
-# Verification Goals: In-Valid Permission of PTE                                              #  
-#                                                                                             #
-# Description: Set PTE.V = 0 and test the Execute Acces in Supervisor mode for Level1.        #
-#                                                                                             #
-###############################################################################################
+#################################################################################################           
+#                                                                                               #
+# Verification Goal: Set PTE.V = 0 and test the execute Acces in Supervisor mode for Level1     #
+#                                                                                               #
+# Description:                - Instruction page fault for execute access.                      #    
+#                                                                                               #
+#################################################################################################
+#                                                                                               #
+# Sub Feature:         In-Valid Permission of PTE                                               #                
+#                                                                                               #   
+# Feature Discription: If PTE does not have Valid (pte.V=0) permission, then accessing it would #
+#                      raise page fault exception of the corresponding access type.             #
+#                                                                                               #
+#################################################################################################   
 
 
 #include "macros.h"
@@ -13,36 +20,35 @@
 .global rvtest_entry_point
 rvtest_entry_point:
 
-    ALL_MEM_PMP                           # set the PMP permissions
-    TRAP_HANDLER(trap_handler)            # set mtvec for trap
-
-    la a1,code                            # loads the address of label code
-    GEN_VA(a1, a0, 0x100, 0x000)          # generrates the VA for label code
-    mv t2,a0                              # move VA to t2
-    li a2, 0x0CE                          # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, 1)     # setup the PTE for level1
+    ALL_MEM_PMP                                                     # set the PMP permissions
+    TRAP_HANDLER(trap_handler)                                      # set mtvec for trap                         
+    li s11, INSTRUCTION_PAGE_FAULT
     
-    la a1,arr                             # loads the address of label arr
-    GEN_VA(a1, a0, 0x200, 0x000)          # generrates the VA for label arr
-    mv t3,a0                              # move VA to t3
-    li a2, 0x0CE                          # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, 1)     # setup the PTE for level1   
-     
-    SATP_SETUP_SV32                       # set the SATP for virtualization
-    CHANGE_T0_S_MODE(t2)                  # changes mode M to S and set the MEPC value to t2
+main:
+    la a1,code                                                      # loads the address of label code
+    GEN_VA(a1, a0, 0x100, 0x000)                                    # generrates the VA for label code
+    mv s5,a0                                                        # move VA to s5
+    mv s10,s5                                                       # move the VA of label code to s10 that will be compared later
+    ori a2, a2, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R )           # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                          # setup the PTE for level1
+
+    la a1,arr                                                       # loads the address of label arr
+    CLEAR_REG(a2)                                                   # clear the reg a2
+    GEN_VA(a1, a0, 0x200, 0x000)                                    # generrates the VA for label arr
+    mv s6,a0                                                        # move VA to s6
+    ori a2, a2, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R )           # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                          # setup the PTE for level1   
+
+    SATP_SETUP_SV32                                                 # set the SATP for virtualization
+    CHANGE_T0_S_MODE(s5)                                            # changes mode M to S and set the MEPC value to s5
 
 code:
-    sw t1,4(t3)                            
+    li t0,ALL_F_S                            
+    j exit
 
-    ABit_trap_handler
-exit:
-	slli x1, x1, 1
-	addi x1, x1, 1
-    mv x30, s1
-	sw x1, tohost, x30
-	self_loop: j self_loop
-
-RVTEST_DATA_SECTION                                                                              
+ABit_trap_handler                                                    # trap handler      
+COREV_VERIF_EXIT_LOGIC                                               # exit logic 
+RVTEST_DATA_SECTION                                                  # data section                                                         
 
 .align 4; .global tohost;   tohost:   .dword 0;
 .align 4; .global fromhost; fromhost: .dword 0;

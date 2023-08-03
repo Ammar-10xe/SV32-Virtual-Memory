@@ -1,8 +1,8 @@
 #################################################################################################           
 #                                                                                               #
-# Verification Goal: Set PTE.V = 0 and test the Read Acces in Supervisor mode for Level1        #
+# Verification Goal: Set PTE.V = 0 and test the execute Acces in Supervisor mode for Level1     #
 #                                                                                               #
-# Description:                - load page fault for read access.                                #    
+# Description:                - Instruction page fault for execute access.                      #    
 #                                                                                               #
 #################################################################################################
 #                                                                                               #
@@ -22,14 +22,14 @@ _start:
 
     ALL_MEM_PMP                                                     # set the PMP permissions
     TRAP_HANDLER(trap_handler)                                      # set mtvec for trap                         
-    li s11, STORE_AMO_PAGE_FAULT
+    li s11, INSTRUCTION_PAGE_FAULT
     
 main:
     la a1,code                                                      # loads the address of label code
     GEN_VA(a1, a0, 0x100, 0x000)                                    # generrates the VA for label code
     mv s5,a0                                                        # move VA to s5
     mv s10,s5                                                       # move the VA of label code to s10 that will be compared later
-    ori a2, a2, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R )   # sets the permission bits
+    ori a2, a2, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R )           # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                          # setup the PTE for level1
 
     la a1,arr                                                       # loads the address of label arr
@@ -43,7 +43,7 @@ main:
     CHANGE_T0_S_MODE(s5)                                            # changes mode M to S and set the MEPC value to s5
 
 code:
-    sw t1,0(s6)                            
+    li t0,ALL_F_S                            
     j exit
 
 ABit_trap_handler                                                    # trap handler      
