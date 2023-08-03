@@ -1304,3 +1304,4 @@ exit:                                                              ;\
 
 
 
+    #define _start   rvtest_entry_point  
