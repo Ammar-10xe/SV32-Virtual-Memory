@@ -1,6 +1,6 @@
 #################################################################################################           
 #                                                                                               #
-# Verification Goal: Set PTE.V = 0 and test the Read Acces in User mode for Level10             #
+# Verification Goal: Set PTE.V = 0 and test the Read Acces in User mode for Level0             #
 #                                                                                               #
 # Description:                - load page fault for read access.                                #    
 #                                                                                               #

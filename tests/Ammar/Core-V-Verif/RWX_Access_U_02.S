@@ -17,7 +17,7 @@
 #                                                                                               #
 #################################################################################################   
 
-#include "../../../macros.h"
+#include "macros.h"
 
 .text
 .global _start
@@ -53,7 +53,7 @@ code:
     j exit
 
 ABit_trap_handler                                                       # trap handler  
-RVTEST_EXIT_LOGIC                                                       # exit logic 
+COREV_VERIF_EXIT_LOGIC                                                  # exit logic 
 RVTEST_DATA_SECTION                                                     # data section                                 
 
 .align 4; .global tohost;   tohost:   .dword 0;
