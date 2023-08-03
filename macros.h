@@ -1172,12 +1172,6 @@ exit:                                                              ;\
     WRITE_CSR(satp, t6)                                            ;
 
 
-
-
-
-
-
-
 #define ERROR1 0x444
 #define ERROR2 0x555
 #define ERROR3 0x666
