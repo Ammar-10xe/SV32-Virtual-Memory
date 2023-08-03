@@ -42,7 +42,7 @@ main:
     CLEAR_REG(a2)                                                            # clear the reg a2
     GEN_VA(a1, a0, 0x100, 0x010)                                             # generrates the VA for label arr
     mv s6,a0                                                                 # move VA to s6
-    ori a2, a2, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R )                    # sets the permission bits
+    ori a2, a2, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R )            # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                   # setup the PTE for level1   
          
     SATP_SETUP_SV32                                                          # set the SATP for virtualization
