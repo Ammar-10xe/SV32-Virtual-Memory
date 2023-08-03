@@ -1,6 +1,6 @@
 # Test to show writing {zero, non-zero} value to satp when mode=bare and the behavior follows the design implementation.
 
-#include "macros.h"
+#include "../../macros.h"
 
 
 
@@ -49,14 +49,14 @@ rvtest_entry_point:
     li t2,SATP32_MODE<<1        # Write zero to satp
     WRITE_CSR(satp, t2)
 
-    TRAP_HANDLER(trap_handler)            # set mtvec for trap
+    la t2,trap_handler            # set mtvec for trap
     WRITE_CSR(mtvec, t2)
     WRITE_CSR(mepc, t3)
     li t2, MSTATUS_MPP
     CLEAR_CSR(mstatus, t2)
     li t2, ( MSTATUS_SUM | MSTATUS_MXR | (MSTATUS_MPP & (MSTATUS_MPP >> 1)))
     SET_CSR(mstatus, t2)
-    li t4, ERROR1
+    li s10, ERROR1
     MRET
 
     # Test case 2: Write non-zero value to satp in "bare" mode (should be ignored)
@@ -70,7 +70,7 @@ Test_case_2:
     CLEAR_CSR(mstatus, t2)
     li t2, ( MSTATUS_SUM | MSTATUS_MXR | (MSTATUS_MPP & (MSTATUS_MPP >> 1)))
     SET_CSR(mstatus, t2)
-    li t4, ERROR2
+    li s10, ERROR2
     MRET
 
 # Test case 3:
@@ -85,10 +85,11 @@ Test_case_3:
     CLEAR_CSR(mstatus, t2)
     li t2, ( MSTATUS_SUM | MSTATUS_MXR | (MSTATUS_MPP & (MSTATUS_MPP >> 1)))
     SET_CSR(mstatus, t2)
-    li t4, ERROR3
+    li s10, ERROR3
     MRET
 
 code:
+    csrr s8,mepc
     li t6, 1
     j exit
 
@@ -115,15 +116,15 @@ trap_handler:
 instruction_access_fault:
    li t5 , ERROR1
    li t6 ,ERROR2
-   beq t4,t5,Test_handel_1
-   beq t4,t6,Test_handel_2
+   beq s10,t5,Test_handel_1
+   beq s10,t6,Test_handel_2
     j exit
 
 illegal_instruction_fault:
     li t5 , ERROR1
    li t6 ,ERROR2
-   beq t4,t5,Test_handel_1
-   beq t4,t6,Test_handel_2
+   beq s10,t5,Test_handel_1
+   beq s10,t6,Test_handel_2
     j exit
 
 load_access_fault:
@@ -145,18 +146,20 @@ trap_handler_end:
     mret
 
 Test_handel_1:
-la t5,Test_case_2
-csrw mepc , t5
-li t6,MSTATUS_MPP
-csrw mstatus,t6
-mret
+# la t5,Test_case_2
+# csrw mepc , t5
+# li t6,MSTATUS_MPP
+# csrw mstatus,t6
+# mret
+j Test_case_2
 
 Test_handel_2:
-la t5,Test_case_3
-csrw mepc , t5
-li t6,MSTATUS_MPP
-csrw mstatus,t6
-mret
+# la t5,Test_case_3
+# csrw mepc , t5
+# li t6,MSTATUS_MPP
+# csrw mstatus,t6
+j Test_case_3
+
 
 exit:
 	slli x1, x1, 1
