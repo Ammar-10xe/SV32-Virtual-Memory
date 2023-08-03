@@ -29,6 +29,7 @@ main:
     GEN_VA(a1, a0, 0x100, 0x000)                                    # generrates the VA for label code
     mv s5,a0                                                        # move VA to s5
     mv s10,s5                                                       # move the VA of label code to s10 that will be compared later
+    CLEAR_REG(a2)                                                   # clear the reg a2    
     ori a2, a2, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                          # setup the PTE for level1
 
