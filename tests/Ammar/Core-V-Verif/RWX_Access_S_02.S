@@ -25,6 +25,7 @@ _start:
 
     PMP_ALL_MEM                                                         # set the PMP permissions
     TRAP_HANDLER(trap_handler)                                          # set mtvec for trap
+    li s10,110
 
 main: 
 
@@ -49,7 +50,7 @@ code:
     li t1,ALL_F_S                            
     sw t1,4(s6)                                                         # test the Read Acces in Supervisor mode for Level1 PTE 
     lw t2,4(s6)
-    j exit
+    # j exit
 
 ABit_trap_handler                                                       # trap handler  
 COREV_VERIF_EXIT_LOGIC                                                  # exit logic 
