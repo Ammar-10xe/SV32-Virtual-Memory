@@ -260,9 +260,7 @@
     li        t0, MSTATUS_MPP                                      ;\
     CLEAR_CSR (mstatus, t0)                                        ;\
     li  t1, MSTATUS_MPP & ( MSTATUS_MPP >> 1)                      ;\
-    li  t2, MSTATUS_SUM                                            ;\
-    or t3,t1,t2                                                    ;\
-    SET_CSR   (mstatus,t3)                                         ;\
+    SET_CSR   (mstatus,t1)                                         ;\
     WRITE_CSR (mepc,MEPC_ADDR)                                     ;\
     mret                                                           ;
 
@@ -1485,4 +1483,5 @@ exit:                                                              ;\
     .align 16                                                      ;\
     arr:                                                           ;\
         .word 0x23                                                 ;
-
+        
+        
