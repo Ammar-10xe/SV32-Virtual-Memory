@@ -23,8 +23,8 @@
 _start:
 
     PMP_ALL_MEM                                                         # set the PMP permissions
-    TRAP_HANDLER(trap_handler)                                          # set mtvec for trap
-
+    TRAP_HANDLER(trap_handler)                                          # set mtvec for trap                  
+    li s10,110                                                        
 main: 
 
     la a1,pgtb_l0                                                       # loads the address of label code
@@ -41,7 +41,8 @@ main:
     ori a2, a2, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )       # sets the permission bits                  
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                              # setup the PTE for level1
     
-    la a1,arr                                                           # loads the address of label arr
+
+    # sw s8,0(a1)
     GEN_VA(a1, a0, 0x100, 0x010)                                        # generrates the VA for label arr
     mv s6,a0                                                            # move VA to s6
     CLEAR_REG(a2)                                                       # clear the reg a2 
@@ -62,4 +63,5 @@ RVTEST_DATA_SECTION                                                     # data s
             
 .align 4; .global tohost;   tohost:   .dword 0;
 .align 4; .global fromhost; fromhost: .dword 0;
+
 
