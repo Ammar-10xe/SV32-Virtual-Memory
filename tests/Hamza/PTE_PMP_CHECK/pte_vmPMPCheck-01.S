@@ -1,4 +1,4 @@
-#include "../../../macros.h"
+#include "macros.h"
 #define Test_Access_Bit
 .text
 .globl rvtest_entry_point
