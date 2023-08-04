@@ -452,8 +452,10 @@
 
 #define ABit_trap_handler                                          ;\
     trap_handler:                                                  ;\
+        li t0,110 ;\
+        beq t0,s10,trap_handler_end ;\
         csrr  t0,    mcause                                        ;\
-        bne   t0, s11, wrong_excep              ;\
+        bne   t0, s11, wrong_excep                           ;\
         csrr  s11, mepc                                             ;\
         bne   s10, s11, wrong_excep                                 ;\
         li    t1,   1                                              ;\
