@@ -73,20 +73,84 @@ rvtest_entry_point:
     SATP_SETUP_SV32
     MRET
 
+    #Secound Process uses the address
+    Second_Process:
+    WRITE_CSR(mepc, s6)
+    li t2, MSTATUS_MPP
+    CLEAR_CSR(mstatus, t2)
+    li t2, ( MSTATUS_SUM | MSTATUS_MXR | (MSTATUS_MPP & (MSTATUS_MPP >> 1)))
+    SET_CSR(mstatus, t2)
+    li t2,5
+    SATP_SETUP2_SV32
+    MRET
+
 
 code:
-    li t6, 1
-    SATP_SETUP2_SV32
-    li s7, SSTATUS_SPP
-    csrw sstatus, s7
-    csrw sepc ,s6
-    sret
+    li t5, ERROR1
+    mret
+    # SATP_SETUP2_SV32
+    # li s7, SSTATUS_SPP
+    # csrw sstatus, s7
+    # csrw sepc ,s6
+    # sret
 code1:
     li t6, 1
     csrr s8,mepc
 
-ABit_trap_handler                 # trap handler
+trap_handler:
 
+    csrr  t0,    mcause
+    csrr  t4,    mtval
+    li    t1,   1
+    beq   t0,   t1, instruction_access_fault
+    li    t1,   2
+    beq   t0,   t1, illegal_instruction_fault
+    li    t1,   5
+    beq   t0,   t1, load_access_fault
+    li    t1,   7
+    beq   t0,   t1, store_access_fault
+    li    t1,   12
+    beq   t0,   t1, instruction_page_fault
+    li    t1,   13
+    beq   t0,   t1, load_page_fault
+    li    t1,   15
+    beq   t0,   t1, store_page_fault
+    j     trap_handler_end
+
+instruction_access_fault:
+    j exit
+
+illegal_instruction_fault:
+   li s10 , ERROR1
+   beq s10,t5,Test_handel_1
+    j exit
+
+    j exit
+
+load_access_fault:
+    j exit
+
+store_access_fault:
+    j exit
+
+instruction_page_fault:
+    j exit
+
+load_page_fault:
+    j exit
+
+store_page_fault:
+    j exit
+
+trap_handler_end:
+    mret
+Test_handel_1:
+# la t5,Second_Process
+# csrw mepc , t5
+# li t6,MSTATUS_MPP
+# csrw mstatus,t6
+# mret
+j Second_Process
 exit:
 	slli x1, x1, 1
 	addi x1, x1, 1

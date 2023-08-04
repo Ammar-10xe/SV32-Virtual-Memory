@@ -1,21 +1,21 @@
-#include "../../../macros.h"
+#include "macros.h"
 #define Test_Access_Bit
 .text
-    #ifdef Test_Access_Bit
+.globl rvtest_entry_point
+rvtest_entry_point:
+    # BitFields
+    # MODE:U_MODE LEVEL(PTE):1, R(PTE):0, W(PTE):0, X(PTE):1, A(PTE):1
+    TEST_UBIT_SET(0x00, 1, 1, 1, 0, 0)
+    nop
+
+#ifdef Test_Access_Bit
     ABit_trap_handler
     #endif
-.globl _start
-_start:
-    # BitFields
-    # MODE:U_MODE LEVEL(PTE):1, R(PTE):1, W(PTE):0, X(PTE):1,A(PTE):1
-   TEST_UBIT_SET(0x00, 0, 1, 0, 1, 1)
-
 exit:
-    csrr t2,mstatus
 	slli x1, x1, 1
 	addi x1, x1, 1
     mv x30, s1
-	sw x1, 0(x30)
+	sw x1, tohost, x30
 	self_loop: j self_loop
 .data
 test_seg:
