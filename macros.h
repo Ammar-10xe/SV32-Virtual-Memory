@@ -452,8 +452,8 @@
 
 #define ABit_trap_handler                                          ;\
     trap_handler:                                                  ;\
-        li t0,110 ;\
-        beq t0,s10,trap_handler_end ;\
+    li t0,110;\
+    beq s11 ,t0,No_excep;\
         csrr  t0,    mcause                                        ;\
         bne   t0, s11, wrong_excep                           ;\
         csrr  s11, mepc                                             ;\
@@ -506,7 +506,10 @@
     wrong_excep:;\
         li x1, 1                                                   ;\
         la s1, tohost                                              ;\
+        j exit;\
+    No_excep:;\
         j exit;
+
 
 #define TEST_DIRTY_BIT(MODE, LEVEL, R, W, X, XD, D)                ;\
     li t2, -1                                                      ;\
@@ -818,7 +821,16 @@
     li t2, 0x0F		               ;\
     WRITE_CSR (pmpcfg0, t2)        ;
 
-#define TEST_UBIT_UNSET(MODE, LEVEL, R, W, X, A)                ;\
+#define TEST_UBIT_UNSET(MODE, LEVEL, R, W, X, op)                ;\
+    .if(op == 1);\
+        li s11, STORE_AMO_PAGE_FAULT;\
+    .endif;\
+    .if(op == 0);\
+        li s11, LOAD_PAGE_FAULT;\
+    .endif                                                     ;\
+    .if(X == 0);\
+        li s11, INSTRUCTION_PAGE_FAULT                            ;\
+    .endif;\
     li t2, -1		                                               ;\
 	csrw pmpaddr0, t2                                              ;\
 	li t2, 0x0F		                                               ;\
@@ -839,11 +851,12 @@
     .endif                                                         ;\
     GEN_VA(a1, a0, 0x003, 0x000)                                   ;\
     mv t3, a0                                                      ;\
+    SET_PTE_A(a2, REG_CLEAR)                                        ;\
     .if(X == 1)                                                    ;\
-        SET_PTE_X(a2, NO_REG_CLEAR)                                    ;\
+        SET_PTE_U(a2, NO_REG_CLEAR)                                    ;\
     .endif                                                         ;\
-    SET_PTE_A(a2, NO_REG_CLEAR)                                        ;\
     SET_PTE_W(a2, NO_REG_CLEAR)                                        ;\
+    SET_PTE_X(a2, NO_REG_CLEAR)                                    ;\
     SET_PTE_R(a2, NO_REG_CLEAR)                                        ;\
     SET_PTE_D(a2, NO_REG_CLEAR)                                        ;\
     SET_PTE_V(a2, NO_REG_CLEAR)                                        ;\
@@ -861,9 +874,8 @@
     .if(W == 1)                                                    ;\
         SET_PTE_W(a2, NO_REG_CLEAR)                                    ;\
     .endif                                                         ;\
-    .if(A == 1)                                                    ;\
-        SET_PTE_A(a2, NO_REG_CLEAR)                                    ;\
-    .endif                                                         ;\
+    SET_PTE_X(a2, NO_REG_CLEAR)                                    ;\
+    SET_PTE_A(a2, NO_REG_CLEAR)                                    ;\
     SET_PTE_D(a2, NO_REG_CLEAR)                                        ;\
     SET_PTE_V(a2, NO_REG_CLEAR)                                        ;\
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL)                          ;\
@@ -891,10 +903,24 @@
         li t2, 0x00000                                             ;\
     .endif                                                         ;\
     SET_CSR (mstatus, t2)                                          ;\
+    mv s10,t3                                                      ;\
+           .if(X == 1);\
+        srli t3, t3, 12;\
+        slli t3, t3, 12;\
+        .if(MODE == S_MODE);\
+            la s2, test_mepc_S;\
+        .else;\
+            la s2, test_mepc_U;\
+        .endif;\
+        slli s2, s2, 20;\
+        srli s2, s2, 20;\
+        or s10, t3, s2;\
+    .endif;\
     MRET                                                           ;\
     supervisor_code:                                               ;\
     li t1, 0x45                                                    ;\
-    .if(R == 1)                                                    ;\
+    test_mepc_S:;\
+    .if(R != 1)                                                    ;\
         lw t1, 0(t4)                                               ;\
     .endif                                                         ;\
     .if(W == 1)                                                    ;\
@@ -904,16 +930,26 @@
     j exit                                                         ;\
     user_code:                                                     ;\
     li t1, 0x45                                                    ;\
-    .if(R == 1)                                                    ;\
+    test_mepc_U:;\
+    .if(op != 1)                                                    ;\
         lw t1, 0(t4)                                               ;\
     .endif                                                         ;\
-    .if(W == 1)                                                    ;\
+    .if(op == 1)                                                    ;\
         sw t1, 0(t4)                                               ;\
     .endif                                                         ;\
         li x1, 1                                                   ;\
     j exit     ;
 
-#define TEST_UBIT_SET(MODE, LEVEL, R, W, X, A)                     ;\
+#define TEST_UBIT_SET(MODE, LEVEL, R, W, X, op)                ;\
+    .if(op == 1);\
+        li s11, STORE_AMO_PAGE_FAULT;\
+    .endif;\
+    .if(op == 0);\
+        li s11, LOAD_PAGE_FAULT;\
+    .endif                                                     ;\
+    .if(X == 0);\
+        li s11, INSTRUCTION_PAGE_FAULT                            ;\
+    .endif;\
     li t2, -1		                                               ;\
 	csrw pmpaddr0, t2                                              ;\
 	li t2, 0x0F		                                               ;\
@@ -934,15 +970,15 @@
     .endif                                                         ;\
     GEN_VA(a1, a0, 0x003, 0x000)                                   ;\
     mv t3, a0                                                      ;\
+    SET_PTE_A(a2, REG_CLEAR)                                        ;\
     .if(X == 1)                                                    ;\
         SET_PTE_X(a2, NO_REG_CLEAR)                                    ;\
     .endif                                                         ;\
-    SET_PTE_A(a2, NO_REG_CLEAR)                                        ;\
     SET_PTE_W(a2, NO_REG_CLEAR)                                        ;\
+    SET_PTE_U(a2, NO_REG_CLEAR)                                    ;\
     SET_PTE_R(a2, NO_REG_CLEAR)                                        ;\
     SET_PTE_D(a2, NO_REG_CLEAR)                                        ;\
     SET_PTE_V(a2, NO_REG_CLEAR)                                        ;\
-    SET_PTE_U(a2, NO_REG_CLEAR)                                        ;\
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL)                          ;\
     la a1, test_seg                                                ;\
     .if(LEVEL == 0)                                                ;\
@@ -951,18 +987,19 @@
         GEN_VA(a1, a0, 0x004, 0x000)                               ;\
     .endif                                                         ;\
     mv t4, a0                                                      ;\
+    SET_PTE_A(a2, REG_CLEAR)                                    ;\
+    .if (X==1)                                                     ;\
+    SET_PTE_X(a2, NO_REG_CLEAR)                                    ;\
+    .endif                                                         ;\
     .if(R == 1)                                                    ;\
-        SET_PTE_R(a2, REG_CLEAR)                                       ;\
+        SET_PTE_R(a2, NO_REG_CLEAR)                                       ;\
     .endif                                                         ;\
     .if(W == 1)                                                    ;\
         SET_PTE_W(a2, NO_REG_CLEAR)                                    ;\
     .endif                                                         ;\
-    .if(A == 1)                                                    ;\
-        SET_PTE_A(a2, NO_REG_CLEAR)                                    ;\
-    .endif                                                         ;\
     SET_PTE_D(a2, NO_REG_CLEAR)                                        ;\
     SET_PTE_V(a2, NO_REG_CLEAR)                                        ;\
-    SET_PTE_U(a2, NO_REG_CLEAR)                                        ;\
+    SET_PTE_U(a2, NO_REG_CLEAR)                                    ;\
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL)                          ;\
     la t1, tohost                                                  ;\
     mv a1, t1                                                      ;\
@@ -975,7 +1012,6 @@
     SET_RWXV_BITS(a2, REG_CLEAR)                                       ;\
     SET_PTE_A(a2, NO_REG_CLEAR)                                        ;\
     SET_PTE_D(a2, NO_REG_CLEAR)                                        ;\
-    SET_PTE_U(a2, NO_REG_CLEAR)                                        ;\
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL)                          ;\
     SATP_SETUP_SV32                                                ;\
     la t2, trap_handler                                            ;\
@@ -989,10 +1025,24 @@
         li t2, 0x00000                                             ;\
     .endif                                                         ;\
     SET_CSR (mstatus, t2)                                          ;\
+    mv s10,t3                                                      ;\
+           .if(X == 1);\
+        srli t3, t3, 12;\
+        slli t3, t3, 12;\
+        .if(MODE == S_MODE);\
+            la s2, test_mepc_S;\
+        .else;\
+            la s2, test_mepc_U;\
+        .endif;\
+        slli s2, s2, 20;\
+        srli s2, s2, 20;\
+        or s10, t3, s2;\
+    .endif;\
     MRET                                                           ;\
-    supervisor_code:;\
+    supervisor_code:                                               ;\
     li t1, 0x45                                                    ;\
-    .if(R == 1)                                                    ;\
+    test_mepc_S:;\
+    .if(R != 1)                                                    ;\
         lw t1, 0(t4)                                               ;\
     .endif                                                         ;\
     .if(W == 1)                                                    ;\
@@ -1001,13 +1051,16 @@
     j exit                                                         ;\
     user_code:                                                     ;\
     li t1, 0x45                                                    ;\
-    .if(R == 1)                                                    ;\
+    test_mepc_U:;\
+    .if(op != 1)                                                    ;\
         lw t1, 0(t4)                                               ;\
+        li s11, 110 ;\
     .endif                                                         ;\
-    .if(W == 1)                                                    ;\
+    .if(op == 1)                                                    ;\
         sw t1, 0(t4)                                               ;\
+        li s11, 110 ;\
     .endif                                                         ;\
-    j exit     ;
+     mret     ;
 
     #define TRAP_HANDLER( TRAP )                                   ;\
     la t1, TRAP                                                    ;\
