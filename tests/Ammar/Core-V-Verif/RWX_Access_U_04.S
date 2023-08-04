@@ -48,9 +48,9 @@ main:
     ori a2, a2, (PTE_D | PTE_A | PTE_U | PTE_X | PTE_R | PTE_V) # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                      # setup the PTE for level1   
                            
-    # SATP_SETUP_SV32                                             # set the SATP for virtualization
+    SATP_SETUP_SV32                                             # set the SATP for virtualization
     # li s7, MSTATUS_SUM
-    WRITE_CSR(mstatus,s7)                                     # set the mstatus.SUM = 1 
+    # WRITE_CSR(mstatus,s7)                                     # set the mstatus.SUM = 1 
     CHANGE_T0_S_MODE(s5)                                        # change mode M to S and set the MEPC value to t2       
          
 code:             
