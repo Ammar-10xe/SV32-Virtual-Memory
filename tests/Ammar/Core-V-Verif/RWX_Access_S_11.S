@@ -53,7 +53,7 @@ main:
     SATP_SETUP_SV32                                        # set the SATP for virtualization
     CHANGE_T0_S_MODE(s5)                                   # changes mode M to S and set the MEPC value to s5
 
-code:             
+code:                                    
     sw t1,4(s6)                                             # test the Read Acces in Supervisor mode for Level1 PTE 
     lw t2,4(s6)
     j exit                                                       
