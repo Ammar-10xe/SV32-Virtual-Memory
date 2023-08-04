@@ -1,6 +1,6 @@
 #################################################################################################           
 #                                                                                               #
-# Verification Goal: Test the Read Acces in Supervisor mode for Level1 (PTE.r = 1)              #
+# Verification Goal: Test the execute Acces in Supervisor mode for Level1 (PTE.x = 1)           #
 #                                                                                               #
 # Description:       RWX access should be successful if the corresponding permissions           #
 #                    are granted in the PTE. Check that load, store and execute works           #
@@ -16,6 +16,7 @@
 #                      Otherwise raise a page fault exception of the corresponding access type  #   
 #                                                                                               #
 #################################################################################################   
+
 
 #include "macros.h"
 .text
@@ -44,9 +45,10 @@ main:
     SATP_SETUP_SV32                                                     # set the SATP for virtualization
     CHANGE_T0_S_MODE(s5)                                                # changes mode M to S and set the MEPC value to s5
 
-code:
-    li t1,ALL_F_S     
-    lw t1,0(s6)                                                         # test the Read Acces in Supervisor mode for Level1 PTE 
+code:             
+    li t1,ALL_F_S                            
+    sw t1,4(s6)                                                         # test the Read Acces in Supervisor mode for Level1 PTE 
+    lw t2,4(s6)
     j exit
 
 ABit_trap_handler                                                       # trap handler  
