@@ -1,9 +1,8 @@
-
 #################################################################################################           
 #                                                                                               #
-# Verification Goal: Test the Execute acces in User mode for Level1                             #
+# Verification Goal: Test the Read acces in User mode for Level1                                #
 #                                                                                               #
-# Description:       Execute access to the PTE should raise store/AMO page fault                #
+# Description:       Read access to the PTE should raise load page fault for read access        #
 #                                                                                               #
 #################################################################################################
 #                                                                                               #
@@ -14,7 +13,8 @@
 #                      exception of the corresponding access type.                              #   
 #                                                                                               #
 #################################################################################################   
-#include "../../../macros.h"
+
+#include "macros.h"
 
 .text
 .global _start
@@ -22,7 +22,7 @@ _start:
 
     ALL_MEM_PMP                                               # set the PMP permissions
     TRAP_HANDLER(trap_handler)                                # set mtvec for trap                         
-    li s11, INSTRUCTION_PAGE_FAULT   
+    li s11, LOAD_PAGE_FAULT   
 main:     
 
     la a1,code                                                # loads the address of label code
@@ -43,16 +43,17 @@ main:
 
     SATP_SETUP_SV32                                           # set the SATP for virtualization
     CHANGE_T0_U_MODE(s5)                                      # changes mode M to U and set the MEPC value to s5
-    .align 16                                                 # to make the ppn[0] of code misalligned
 
 code:
-    li t1, ALL_F_S                                            # test the Execute Acces in Supervisor mode for Level1 PTE 
+    lw t1,0(s6)                            
 
 end:
 
 ABit_trap_handler                                             # trap handler      
-RVTEST_EXIT_LOGIC                                             # exit logic 
+COREV_VERIF_EXIT_LOGIC                                        # exit logic 
 RVTEST_DATA_SECTION_MISALIGNED                                # ppn[0]!=0 for Misaligned Superpage 
 
 .align 4; .global tohost;   tohost:   .dword 0;
 .align 4; .global fromhost; fromhost: .dword 0;
+
+

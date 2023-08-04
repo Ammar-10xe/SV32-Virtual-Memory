@@ -14,7 +14,7 @@
 #                      exception of the corresponding access type.                              #   
 #                                                                                               #
 #################################################################################################   
-#include "../../../macros.h"
+#include "macros.h"
 
 .text
 .global _start
@@ -51,7 +51,7 @@ code:
 end:
 
 ABit_trap_handler                                             # trap handler      
-RVTEST_EXIT_LOGIC                                             # exit logic 
+COREV_VERIF_EXIT_LOGIC                                        # exit logic 
 RVTEST_DATA_SECTION_MISALIGNED                                # ppn[0]!=0 for Misaligned Superpage 
 
 .align 4; .global tohost;   tohost:   .dword 0;

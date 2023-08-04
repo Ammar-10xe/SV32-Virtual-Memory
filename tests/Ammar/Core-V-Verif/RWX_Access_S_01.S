@@ -1,6 +1,6 @@
 #################################################################################################           
 #                                                                                               #
-# Verification Goal: Test the Read Acces in Supervisor mode for Level1 (PTE.x = 1, PTE.r = 1)   #
+# Verification Goal: Test the Read Acces in Supervisor mode for Level1 (PTE.r = 1)              #
 #                                                                                               #
 # Description:       RWX access should be successful if the corresponding permissions           #
 #                    are granted in the PTE. Check that load, store and execute works           #
@@ -24,7 +24,7 @@ _start:
 
     PMP_ALL_MEM                                                         # set the PMP permissions
     TRAP_HANDLER(trap_handler)                                          # set mtvec for trap
-
+    li s10,110
 main: 
 
     la a1,code                                                          # loads the address of label code
@@ -47,7 +47,6 @@ main:
 code:
     li t1,ALL_F_S     
     lw t1,0(s6)                                                         # test the Read Acces in Supervisor mode for Level1 PTE 
-    j exit
 
 ABit_trap_handler                                                       # trap handler  
 COREV_VERIF_EXIT_LOGIC                                                  # exit logic 

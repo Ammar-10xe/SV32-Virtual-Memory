@@ -260,9 +260,7 @@
     li        t0, MSTATUS_MPP                                      ;\
     CLEAR_CSR (mstatus, t0)                                        ;\
     li  t1, MSTATUS_MPP & ( MSTATUS_MPP >> 1)                      ;\
-    li  t2, MSTATUS_SUM                                            ;\
-    or t3,t1,t2                                                    ;\
-    SET_CSR   (mstatus,t3)                                         ;\
+    SET_CSR   (mstatus,t1)                                         ;\
     WRITE_CSR (mepc,MEPC_ADDR)                                     ;\
     mret                                                           ;
 
@@ -457,7 +455,7 @@
     li t0,110;\
     beq s11 ,t0,No_excep;\
         csrr  t0,    mcause                                        ;\
-        bne   t0, s11, wrong_excep              ;\
+        bne   t0, s11, wrong_excep                           ;\
         csrr  s11, mepc                                             ;\
         bne   s10, s11, wrong_excep                                 ;\
         li    t1,   1                                              ;\
@@ -1509,10 +1507,10 @@ exit:                                                              ;\
     li t1, 0x45                                                    ;\
     test_mepc_S:;\
     .if(R == 1)                                                    ;\
-        lw t1, 8(t1)                                          ;\
+        lw t1, 8(t1)                                               ;\
     .endif                                                         ;\
     .if(W == 1)                                                    ;\
-        sw t1, 0(t4)                                          ;\
+        sw t1, 0(t4)                                               ;\
     .endif                                                         ;\
     j exit                                                         ;\
     user_code:                                                     ;\
@@ -1529,4 +1527,16 @@ exit:                                                              ;\
 
 
 
-    #define _start   rvtest_entry_point
+    #define _start   rvtest_entry_point                            
+
+    #define RVTEST_DATA_SECTION_MISALIGNED                         ;\
+    .data                                                          ;\
+    pgtb_l1:                                                       ;\
+        .zero 4096                                                 ;\
+    pgtb_l0:                                                       ;\
+        .zero 4096                                                 ;\
+    .align 16                                                      ;\
+    arr:                                                           ;\
+        .word 0x23                                                 ;
+        
+        

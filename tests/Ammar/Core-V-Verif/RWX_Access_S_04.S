@@ -17,7 +17,8 @@
 #                                                                                               #
 #################################################################################################   
 
-#include "../../../macros.h".text
+#include "macros.h"
+.text
 .global _start
 _start:
 
@@ -41,7 +42,6 @@ main:
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                              # setup the PTE for level1
     
 
-    sw s8,0(a1)
     GEN_VA(a1, a0, 0x100, 0x010)                                        # generrates the VA for label arr
     mv s6,a0                                                            # move VA to s6
     CLEAR_REG(a2)                                                       # clear the reg a2 
@@ -57,11 +57,10 @@ code:
     j exit
     
 ABit_trap_handler                                                       # trap handler  
-RVTEST_EXIT_LOGIC                                                       # exit logic 
+COREV_VERIF_EXIT_LOGIC                                                  # exit logic 
 RVTEST_DATA_SECTION                                                     # data section                                 
             
 .align 4; .global tohost;   tohost:   .dword 0;
 .align 4; .global fromhost; fromhost: .dword 0;
-
 
 

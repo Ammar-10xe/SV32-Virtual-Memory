@@ -18,7 +18,7 @@
 #################################################################################################   
 
 
-#include "../../../macros.h"
+#include "macros.h"
 .text
 .global _start
 _start:
@@ -53,13 +53,13 @@ main:
     SATP_SETUP_SV32                                        # set the SATP for virtualization
     CHANGE_T0_S_MODE(s5)                                   # changes mode M to S and set the MEPC value to s5
 
-code:             
+code:                                    
     sw t1,4(s6)                                             # test the Read Acces in Supervisor mode for Level1 PTE 
     lw t2,4(s6)
     j exit                                                       
 
 ABit_trap_handler                                           # trap handler  
-RVTEST_EXIT_LOGIC                                           # exit logic 
+COREV_VERIF_EXIT_LOGIC                                      # exit logic 
 RVTEST_DATA_SECTION                                         # data section                                 
             
 .align 4; .global tohost;   tohost:   .dword 0;
