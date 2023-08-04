@@ -1454,10 +1454,10 @@ exit:                                                              ;\
     li t1, 0x45                                                    ;\
     test_mepc_S:;\
     .if(R == 1)                                                    ;\
-        lw t1, 8(t1)                                          ;\
+        lw t1, 8(t1)                                               ;\
     .endif                                                         ;\
     .if(W == 1)                                                    ;\
-        sw t1, 0(t4)                                          ;\
+        sw t1, 0(t4)                                               ;\
     .endif                                                         ;\
     j exit                                                         ;\
     user_code:                                                     ;\
@@ -1474,4 +1474,15 @@ exit:                                                              ;\
 
 
 
-    #define _start   rvtest_entry_point
+    #define _start   rvtest_entry_point                            
+
+    #define RVTEST_DATA_SECTION_MISALIGNED                         ;\
+    .data                                                          ;\
+    pgtb_l1:                                                       ;\
+        .zero 4096                                                 ;\
+    pgtb_l0:                                                       ;\
+        .zero 4096                                                 ;\
+    .align 16                                                      ;\
+    arr:                                                           ;\
+        .word 0x23                                                 ;
+
