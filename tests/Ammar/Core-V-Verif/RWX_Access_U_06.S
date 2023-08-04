@@ -49,10 +49,11 @@ main:
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                              # setup the PTE for level1   
                            
     SATP_SETUP_SV32                                                     # set the SATP for virtualization
+    # li s7, MSTATUS_SUM
+    # WRITE_CSR(mstatus,s7)                                             # set the mstatus.SUM = 1     
     CHANGE_T0_S_MODE(s5)                                                # change mode M to S and set the MEPC value to t2       
          
 code:             
-    li t1,ALL_F_S                            
     sw t1,4(s6)                                                         # test the Read Acces in Supervisor mode for Level1 PTE 
     lw t2,4(s6)
 
