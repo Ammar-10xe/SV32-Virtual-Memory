@@ -4,10 +4,12 @@
 .globl rvtest_entry_point
 rvtest_entry_point:
     ALL_MEM_PMP
-    li t0, SATP32_MODE
+    li t5, EXPECTED_ASID
+    li t0, ASID_IMPLE_CVA6
     WRITE_CSR(satp, t0)
     READ_CSR(satp, t1)
-    beq t1, t0, exit
+    and t1, t1, t5
+    beq t1, t5, exit
     li x1, 1
     j exit
 
