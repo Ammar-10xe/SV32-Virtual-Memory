@@ -264,11 +264,11 @@
     WRITE_CSR (mepc,MEPC_ADDR)                                     ;\
     mret                                                           ;
 
-#define CHANGE_T0_U_MODE(SEPC_ADDR)                                ;\
-    li        t0, SSTATUS_SPP                                      ;\
-    CLEAR_CSR (sstatus,t0)                                         ;\
-    WRITE_CSR (sepc,SEPC_ADDR)                                     ;\
-    sret                                                           ;
+#define CHANGE_T0_U_MODE(MEPC_ADDR)                                ;\
+    li        t0, MSTATUS_MPP                                      ;\
+    CLEAR_CSR (mstatus,t0)                                         ;\
+    WRITE_CSR (mepc,MEPC_ADDR)                                     ;\
+    mret                                                           ;
 
 #define LA(reg,val)                                                ;\
     .option push                                               ;\
