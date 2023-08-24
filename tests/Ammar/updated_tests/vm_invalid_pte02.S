@@ -41,14 +41,14 @@ trap_handler:
     bne  t0, t4, exit                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
 continue_execution:
-    INCREMENT_MEPC
+    INCREMENT_MEPC                          # update the value of mepc 
     mret
 
 next_instr:
 
-    INCREMENT_MEPC
-    li t1,MSTATUS_MPP
-    csrw mstatus,t1                         # jump to the register value
+    INCREMENT_MEPC                          # update the value of mepc 
+    li t1,MSTATUS_MPP                       # update the MPP to MSTATUS_MPP for M mode
+    csrw mstatus,t1                         # update the value mstatus MPP 
     mret
 
 .text
