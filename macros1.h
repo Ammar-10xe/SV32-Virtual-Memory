@@ -73,8 +73,8 @@ exit:                                                              ;\
 	csrw pmpcfg0, t2                                               ;\
     sfence.vma                                                     ;
 
-#define CHECK_MODE                                                 ;\
-    csrr t1, mstatus                                               ;\
-    srli t1,t1,11                                                  ;\
-    andi t1,t1,3                                                   ;\
-    li t2,1                                                        ;
+#define INCREMENT_MEPC                                             ;\
+   csrr t3,mepc                                                    ;\
+    addi t3,t3,4                                                   ;\
+    csrw mepc,t3                                                   ;
+ 

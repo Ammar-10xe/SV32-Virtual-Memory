@@ -41,22 +41,15 @@ trap_handler:
     bne  t0, t4, exit                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
 continue_execution:
-    addi t5, t5, 4                          # calculate the address of the next instruction
-    CHECK_MODE                              # checks the previous mode 
-    beq t1,zero,u_mode                      # if prev mode is u mode jump to u_mode
-    beq t1,t2,s_mode                        # if prev mode is s mode jump to s_mode
-    j next_instr                            # if prev mode is m mode jump next_instr
-
-u_mode:
-    CHANGE_T0_U_MODE(t5)                    # change the mode from M -> U
-s_mode:                     
-    CHANGE_T0_S_MODE(t5)                    # change the mode from M -> S    
+    INCREMENT_MEPC
+    mret
 
 next_instr:
-    csrr t3,mepc                            # Read the value of MEPC into t3
-    addi t3,t3,4                            # Calculate the address of the next instruction 
-    jr t3                                   # jump to the register value
-    
+
+    INCREMENT_MEPC
+    li t1,MSTATUS_MPP
+    csrw mstatus,t1                         # jump to the register value
+    mret
 
 .text
 .global _start
