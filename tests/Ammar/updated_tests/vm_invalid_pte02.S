@@ -66,7 +66,7 @@ _start:
     la t1,trap_handler                                              # loads the address of trap handler 
     csrw mtvec,t1                                                   # sets the mtvec to trap handler 
     
-main:
+PTE_LEVEL1_SUPERVISOR:
 
 # ----------------LEVEL 1 PTE Setup for load and store test---------------------
 
@@ -158,15 +158,16 @@ check_execute:
     li t1, 0x45                                                     # page fault should raise 
 
     addi s11,s11,1
-    li t2,2
-    beq s11,t2,exit
+    li t1,1
+    beq s11,t1,PTE_LEVEL1_USER
+    j exit
 
-main2:
+PTE_LEVEL1_USER:
 
 # ----------------LEVEL 1 PTE Setup for load and store test---------------------
 
     la a1,vm_en                                                     # loads the address of label vm_en
-    mv a0, a1                                                       # generrates the VA for label vm_en
+    mv a0, a1                                         M to S               # generrates the VA for label vm_en
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                          # setup the PTE for level1
  
@@ -186,15 +187,6 @@ main2:
     SATP_SETUP_SV32(pgtb_l1)                                        # set the SATP for virtualization
     la a1,vm_en                                                     # loads the address of vm_en 
     CHANGE_T0_U_MODE(a1)                                            # changes mode M to S and set the MEPC value to a1
-
-
-
-
-
-
-
-
-
 
 
 RVTEST_EXIT_LOGIC                                                    # Exit logic 
@@ -220,5 +212,3 @@ RVTEST_EXIT_LOGIC                                                    # Exit logi
 
 .align 4; .global tohost;   tohost:   .dword 0;
 .align 4; .global fromhost; fromhost: .dword 0;
-
-
