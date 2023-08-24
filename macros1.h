@@ -36,16 +36,6 @@
     csrw satp, t6                                                  ;\
     sfence.vma                                                     ;
 
-#define GEN_VA(PA, VA, UP_10_BITS, MID_10_BITS)                    ;\
-    slli VA, PA, 20                                                ;\
-    srli VA, VA, 20                                                ;\
-    li   t0, UP_10_BITS                                            ;\
-    slli t0, t0, 22                                                ;\
-    or   VA, VA, t0                                                ;\
-    li   t0, MID_10_BITS                                           ;\
-    slli t0, t0, 12                                                ;\
-    or   VA, VA, t0                                                ;
-
 #define CHANGE_T0_S_MODE(MEPC_ADDR)                                ;\
     li        t0, MSTATUS_MPP                                      ;\
     csrc mstatus, t0                                               ;\
