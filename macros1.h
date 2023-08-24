@@ -72,3 +72,9 @@ exit:                                                              ;\
 	li t2, 0x0F		                                               ;\
 	csrw pmpcfg0, t2                                               ;\
     sfence.vma                                                     ;
+
+#define CHECK_MODE                                                 ;\
+    csrr t1, mstatus                                               ;\
+    srli t1,t1,11                                                  ;\
+    andi t1,t1,3                                                   ;\
+    li t2,1                                                        ;

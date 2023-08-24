@@ -15,48 +15,49 @@
 
 #include "../../../macros1.h"
 
-#define IS_S_MODE
-#define ECALL_CAUSE_CODE    9
-
 trap_handler:
 
-    csrr t0, mcause            # Read the value of mcause 
-    la t1, rvtest_check
+    csrr t0, mcause                         # read the value of mcause 
+    la t1, rvtest_check                     # load the address of trvtest_check
     
-    lw t2, 0(t1)               # if cause expected then 1 else 0
-    lw t3, 4(t1)               # expected value of mepc 
-    lw t4, 8(t1)               # expected value of mcause  
+    lw t2, 0(t1)                            # if cause expected then load 1 else 0
+    lw t3, 4(t1)                            # load the expected value of mepc 
+    lw t4, 8(t1)                            # load the expected value of mcause  
 
-    li t5, CAUSE_FETCH_PAGE_FAULT
-    beq t0,t5,next_instr
+    li t5, CAUSE_FETCH_PAGE_FAULT           # load the value of fetch page fault exception 
+    beq t0,t5,next_instr                    # if fetch page fault jump to next instr in M mode
 
+    li  t1, CAUSE_SUPERVISOR_ECALL          # load the value of supervisor ecall
+    beq t0,t1,next_instr                    # checks if ecall is occured
 
-    li  t1, ECALL_CAUSE_CODE   # value of mcause when ecall > Supervisor Mode
-    beq t0,t1,next_instr      # checks for if ecall is occured
+    li  t1, CAUSE_USER_ECALL                # load the value of user ecall
+    beq t0,t1,next_instr                    # checks for ecall is occured
 
-    beqz t2, exit               # Jumps to exit if rvtest_check is 0
-    
-    csrr t5,mepc
-    bne t3,t5,exit              # check the value of mepc with it's expected value
+    beqz t2, exit                           # Jumps to exit if cause is not expected
+ 
+    csrr t5,mepc                            # read the value of mepc 
+    bne t3,t5,exit                          # check the value of mepc with it's expected value
 
-    bne  t0, t4, exit           # Jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
-     
-handler:
+    bne  t0, t4, exit                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
-    addi t5, t5, 4              # Calculate the address of the next instruction
+continue_execution:
+    addi t5, t5, 4                          # calculate the address of the next instruction
+    CHECK_MODE                              # checks the previous mode 
+    beq t1,zero,u_mode                      # if prev mode is u mode jump to u_mode
+    beq t1,t2,s_mode                        # if prev mode is s mode jump to s_mode
+    j next_instr                            # if prev mode is m mode jump next_instr
 
-    #ifdef IS_S_MODE 
-    CHANGE_T0_S_MODE(t5)
-    #else 
-    CHANGE_T0_U_MODE(t5)
-    #endif
+u_mode:
+    CHANGE_T0_U_MODE(t5)                    # change the mode from M -> U
+s_mode:                     
+    CHANGE_T0_S_MODE(t5)                    # change the mode from M -> S    
 
 next_instr:
-
-    csrr t3,mepc                # Read the value of MEPC into t3
-    addi t3,t3,4                # Calculate the address of the next instruction 
-    jr t3
+    csrr t3,mepc                            # Read the value of MEPC into t3
+    addi t3,t3,4                            # Calculate the address of the next instruction 
+    jr t3                                   # jump to the register value
     
+
 .text
 .global _start
 
@@ -67,6 +68,7 @@ _start:
     csrw mtvec,t1                                                   # sets the mtvec to trap handler 
 
 main:
+
 # ----------------LEVEL 1 PTE Setup for load and store test---------------------
 
     la a1,vm_en                                                     # loads the address of label vm_en
