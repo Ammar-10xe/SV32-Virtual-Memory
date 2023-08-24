@@ -9,7 +9,7 @@
 #define SUPERPAGE_SHIFT 22
 
 #define PTE(PA, PR)                                                ;\
-    srli     PA, PA, OFFSET_SHIFT                                            ;\
+    srli     PA, PA, OFFSET_SHIFT                                  ;\
     slli     PA, PA, PTE_PPN_SHIFT                                 ;\
     or       PA, PA, PR                                            ;
 
@@ -17,23 +17,24 @@
     PTE(PA, PR)                                                    ;\
     .if (level==1)                                                 ;\
         la   TMP, pgtb_l1                                          ;\
-        srli VA,  VA, SUPERPAGE_SHIFT                                           ;\
+        srli VA,  VA, SUPERPAGE_SHIFT                              ;\
     .endif                                                         ;\
     .if (level==0)                                                 ;\
         la   TMP, pgtb_l0                                          ;\
-        slli VA,  VA, PTE_PPN_SHIFT                                           ;\
-        srli VA,  VA, SUPERPAGE_SHIFT                                           ;\
+        slli VA,  VA, PTE_PPN_SHIFT                                ;\
+        srli VA,  VA, SUPERPAGE_SHIFT                              ;\
     .endif                                                         ;\
     slli     VA,  VA,  2                                           ;\
     add      TMP, TMP, VA                                          ;\
-    sw     PA,  0(TMP)                                           ;
+    sw     PA,  0(TMP)                                             ;
 
-#define SATP_SETUP_SV32(PGTB_ADDR)                                            ;\
-    la   t6,   PGTB_ADDR                                             ;\
+#define SATP_SETUP_SV32(PGTB_ADDR)                                 ;\
+    la   t6,   PGTB_ADDR                                           ;\
     li   t5,   SATP32_MODE                                         ;\
-    srli t6,   t6, OFFSET_SHIFT                                              ;\
+    srli t6,   t6, OFFSET_SHIFT                                    ;\
     or   t6,   t6, t5                                              ;\
-    csrw satp, t6                                            ;
+    csrw satp, t6                                                  ;\
+    sfence.vma                                                     ;
 
 #define GEN_VA(PA, VA, UP_10_BITS, MID_10_BITS)                    ;\
     slli VA, PA, 20                                                ;\
@@ -47,16 +48,16 @@
 
 #define CHANGE_T0_S_MODE(MEPC_ADDR)                                ;\
     li        t0, MSTATUS_MPP                                      ;\
-    csrc mstatus, t0                                        ;\
+    csrc mstatus, t0                                               ;\
     li  t1, MSTATUS_MPP & ( MSTATUS_MPP >> 1)                      ;\
-    csrs mstatus, t1                                         ;\
-    csrw mepc, MEPC_ADDR                                     ;\
+    csrs mstatus, t1                                               ;\
+    csrw mepc, MEPC_ADDR                                           ;\
     mret                                                           ;
 
 #define CHANGE_T0_U_MODE(MEPC_ADDR)                                ;\
     li        t0, MSTATUS_MPP                                      ;\
-    csrc mstatus, t0                                         ;\
-    csrw mepc, MEPC_ADDR                                    ;\
+    csrc mstatus, t0                                               ;\
+    csrw mepc, MEPC_ADDR                                           ;\
     mret                                                           ;
 
 
@@ -64,7 +65,7 @@
 exit:                                                              ;\
     la t0, tohost                                                  ;\
     li t1, 1                                                       ;\
-    sw t1, 0(t0);\
+    sw t1, 0(t0)                                                   ;\
     j exit                                                         ;
 
 #define COREV_VERIF_EXIT_LOGIC                                     ;\
@@ -75,11 +76,9 @@ exit:                                                              ;\
 	sw x1, tohost, x30                                             ;\
 	self_loop: j self_loop                                         ;
 
-#define ALL_MEM_PMP  ;\
-    li t2, -1		;\
-	csrw pmpaddr0, t2;\
-	li t2, 0x0F		;\
-	csrw pmpcfg0, t2  ;\
-    sfence.vma;
-
-
+#define ALL_MEM_PMP                                                ;\
+    li t2, -1		                                               ;\
+	csrw pmpaddr0, t2                                              ;\
+	li t2, 0x0F		                                               ;\
+	csrw pmpcfg0, t2                                               ;\
+    sfence.vma                                                     ;

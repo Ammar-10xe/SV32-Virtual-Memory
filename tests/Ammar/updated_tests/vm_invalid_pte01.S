@@ -47,7 +47,7 @@ ecall_instr:
 
     csrr t3,mepc                # Read the value of MEPC into t3
     addi t3,t3,4                # Calculate the address of the next instruction 
-    jalr t3
+    jr t3
     
 .text
 .global _start
@@ -114,20 +114,23 @@ check_store:
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                          # setup the PTE for level1
 
 # there is a fault here as the value does not gets updated  afer line 120
-
+    li s11,10
+    li s1,CAUSE_FETCH_PAGE_FAULT
+    la s2, check_execute
 
     SATP_SETUP_SV32(pgtb_l1)                                        # set the SATP for virtualization
+    # sfence.vma
     CHANGE_T0_S_MODE(s5)                                            # changes mode M to S and set the MEPC value to s5
 
      
     li s1,CAUSE_FETCH_PAGE_FAULT
     la s2, check_execute
-
     
 check_execute:
     li s6, 0x45
     nop
     ecall
+ li s11,0x34
 
 
 RVTEST_EXIT_LOGIC                                                    # exit logic 
