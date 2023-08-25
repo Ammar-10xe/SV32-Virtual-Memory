@@ -1,17 +1,20 @@
-#################################################################################################           
-#                                                                                               #
-# Verification Goal: Set PTE.V = 0 and test the Read Acces in Supervisor mode for Level1        #
-#                                                                                               #
-# Description:                - load page fault for read access.                                #    
-#                                                                                               #
-#################################################################################################
-#                                                                                               #
-# Sub Feature:         In-Valid Permission of PTE                                               #                
-#                                                                                               #   
-# Feature Discription: If PTE does not have Valid (pte.V=0) permission, then accessing it would #
-#                      raise page fault exception of the corresponding access type.             #
-#                                                                                               #
-#################################################################################################   
+#=======================================================================
+#   🌟 In-Valid Permission of Level0 PTE 🌟
+#-----------------------------------------------------------------------
+# Test Description:
+#
+# If PTE does not have the Valid (pte.V=0) permission, accessing it
+# would raise a page fault exception of the corresponding access type.
+# When satp.mode=sv32 and PTE has (r,w,x) PMP permissions, this test
+# covers the following scenarios in both supervisor and user privilege
+# modes for level0 PTE.
+#
+# 💫 Set PTE.V = 0 and test the read access.
+# 💫 Set PTE.V = 0 and test the write access.
+# 💫 Set PTE.V = 0 and test the execute access.
+#
+#=======================================================================
+
 
 #include "../../../macros1.h"
 
@@ -65,7 +68,7 @@ _start:
     
 PTE_LEVEL1_SUPERVISOR:
 
-# ----------------LEVEL 1 PTE Setup for load and store test---------------------
+# ----------------LEVEL 1 PTE Setup for load and store test-------------
     la a1,pgtb_l0                                                          # loads the address of label vm_en
     mv a0, a1                                                              # generrates the VA for label vm_en
     ori a2, x0, ( PTE_V )                                                  # sets the permission bits
@@ -93,7 +96,7 @@ PTE_LEVEL1_SUPERVISOR:
     la a1,vm_en                                                            # loads the address of vm_en 
     CHANGE_T0_S_MODE(a1)                                                   # changes mode M to S and set the MEPC value to a1
 
-# ----------------Virtualization Enabeled---------------------
+# ----------------Virtualization Enabeled------------------------------
 
 vm_en:
 
@@ -147,14 +150,14 @@ pre_execute:
     
 PTE_LEVEL1_SUPERVISOR_EXECUTE:
 
-# -------------LEVEL 1 PTE Setup for execute test------------------------
+# -------------LEVEL 1 PTE Setup for execute test-----------------------
                                                                             # Setup a new PTE to test execute 
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1 
     ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R )                   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                  # setup the PTE for level1
 
-# ----------------Set the SATP and change the mode---------------------
+# ----------------Set the SATP and change the mode----------------------
 
     SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
     la a1,check_execute                                                     # loads the address of check_execute
@@ -162,14 +165,14 @@ PTE_LEVEL1_SUPERVISOR_EXECUTE:
 
 PTE_LEVEL1_USER_EXECUTE:
 
-# -------------LEVEL 1 PTE Setup for execute test------------------------
+# -------------LEVEL 1 PTE Setup for execute test-----------------------
                                                                             # Setup a new PTE to test execute 
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1 
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R )           # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                  # setup the PTE for level1
 
-# ----------------Set the SATP and change the mode---------------------
+# ----------------Set the SATP and change the mode----------------------
 
     SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
     la a1,check_execute                                                     # loads the address of check_execute
@@ -186,7 +189,7 @@ check_execute:
 
 PTE_LEVEL1_USER:
 
-# ----------------LEVEL 1 PTE Setup for load and store test---------------------
+# ----------------LEVEL 1 PTE Setup for load and store test--------------
 
     la a1,vm_en                                                             # loads the address of label vm_en
     mv a0, a1                                                               # generrates the VA for label vm_en
@@ -203,7 +206,7 @@ PTE_LEVEL1_USER:
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V)    # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                  # setup the PTE for level1
 
-# ----------------Set the SATP and change the mode---------------------
+# ----------------Set the SATP and change the mode------------------------
 
 
     SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
