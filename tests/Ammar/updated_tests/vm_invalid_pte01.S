@@ -53,12 +53,12 @@ PTE_LEVEL1_SUPERVISOR:
 
 # ----------------Set the SATP and change the mode----------------------
 
-    SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
-    la a1,vm_en                                                             # loads the address of vm_en
+    SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
+    la a1,vm_en                                                            # loads the address of vm_en
     #ifdef smode																													 
-        CHANGE_T0_S_MODE(a1)                                        	    # changes mode M to S and set the MEPC value to a1
+        CHANGE_T0_S_MODE(a1)                                        	   # changes mode M to S and set the MEPC value to a1
     #else
-        CHANGE_T0_U_MODE(a1)                                        	    # changes mode M to U and set the MEPC value to a1
+        CHANGE_T0_U_MODE(a1)                                        	   # changes mode M to U and set the MEPC value to a1
     #endif
 
 # ----------------Virtualization Enabeled-------------------------------
@@ -85,7 +85,7 @@ pre_store:
 check_store:
     sw t1,0(a1)                                                             # test the store access
     nop                          
-    ecall
+    SMODE_ECALL
 
 pre_execute:
 
