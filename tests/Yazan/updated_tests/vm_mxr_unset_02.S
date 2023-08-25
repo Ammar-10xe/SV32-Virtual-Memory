@@ -7,6 +7,19 @@
 #                      then read access on that PTE should raise load page fault exception.     #
 #################################################################################################
 
+
+#===============================================================================
+#   🌟 Make Executable Page Readable with s/mstatus.MXR unset at Level0 PTE 🌟
+#-------------------------------------------------------------------------------
+# Test Description:
+#
+# If PTE has only execute permission (pte.x = 1) and s/mstatus.MXR=0,
+# then read access on that PTE should raise load page fault exception.
+#
+# 💫 Set only the PTE.X = 1 and mstatus.MXR = 0 and test the read access
+#
+#================================================================================
+
 #include "../../../macros1.h"
 
 trap_handler:

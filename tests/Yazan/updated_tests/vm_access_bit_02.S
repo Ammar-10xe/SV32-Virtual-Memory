@@ -8,6 +8,21 @@
 #                      corresponding access type.                                               #
 #################################################################################################     
 
+#=======================================================================
+#   🌟 Access Bit Implementation of Level0 PTE 🌟
+#-----------------------------------------------------------------------
+# Test Description:
+#
+# If implementation does not sets the pte.A on accessing the PTE, and PTE
+# has pte.A=0, then accessing it would raise page fault exception of the
+# corresponding access type.  
+#
+# 💫 Set PTE.A = 0 and test the read access.
+# 💫 Set PTE.A = 0 and test the write access.
+# 💫 Set PTE.A = 0 and test the execute access.
+#
+#=======================================================================
+
 #include "../../../macros1.h"
 
 trap_handler:

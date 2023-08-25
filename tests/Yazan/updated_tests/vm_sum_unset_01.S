@@ -8,6 +8,21 @@
 #                      raise page fault exception of the corresponding access type.             #
 #################################################################################################
 
+#=======================================================================================
+#   🌟 RWX access on U-mode pages in S-mode with s/mstatus.SUM unset at Level1 PTE 🌟
+#---------------------------------------------------------------------------------------
+# Test Description:
+#
+# If PTE belongs to user mode i.e. its U permission bit is set (pte.u = 1) 
+# and m/sstatus.SUM = 0, then accessing that PTE in supervisor mode would 
+# raise page fault exception of the corresponding access type.   
+#
+# 💫 Set PTE.U = 1 and test the execute access
+# 💫 Set PTE.U = 1 and test the read access
+# 💫 Set PTE.U = 1 and test the write access
+#
+#=======================================================================================
+
 #include "../../../macros1.h"
 
 trap_handler:
