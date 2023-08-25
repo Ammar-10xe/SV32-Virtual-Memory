@@ -1,5 +1,5 @@
 #=======================================================================
-#   🌟 RWX Access of Level1 PTE in User and Supervisor mode when valid
+#   🌟 RWX Access of Level0 PTE in User and Supervisor mode when valid
 #      bit is low  🌟
 #-----------------------------------------------------------------------
 # Test Description:

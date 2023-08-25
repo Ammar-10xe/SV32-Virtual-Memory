@@ -74,12 +74,6 @@ exit:                                                              ;\
     csrw pmpcfg0, t2                                               ;\
     sfence.vma                                                     ;
 
-
-// #define INCREMENT_MEPC                                             ;\
-//    csrr t3,mepc                                                    ;\
-//     addi t3,t3,4                                                   ;\
-//     csrw mepc,t3                                                   ;
- 
 #define TEST_PROLOG(ADDR,CAUSE)                                    ;\
     la t1, rvtest_check                                            ;\
     la t2, ADDR                                                    ;\
@@ -90,47 +84,17 @@ exit:                                                              ;\
     sw t3, 8(t1)                                                   ;\
     la a1,rvtest_data                                              ; 
 
-
-// #define INCREMENT_MEPC                                             ;\
-//     csrr t1,mepc                                                   ;\
-//     li t2,3                                                        ;\
-//     and t2,t2,t1                                                   ;\
-//     li t3,3                                                        ;\
-//     bne t2,t3,not_32_bit_Instr                                     ;\
-//     addi  t1,t1,4                                                  ;\
-//     j write_mepc                                                   ;\
-// not_32_bit_Instr:                                                  ;\
-//     addi t1,t1,2                                                   ;\
-// write_mepc:                                                        ;\
-//     csrw mepc,t1                                                   ;
- 
-// .macro INCREMENT_MEPC label_suffix
-//     csrr t1, mepc
-//     li t2, 3
-//     and t2, t2, t1
-//     bne t2, x0, not_32_bit_Instr_\label_suffix
-//     addi t1, t1, 4
-//     j write_mepc_\label_suffix
-// not_32_bit_Instr_\label_suffix:
-//     addi t1, t1, 2
-// write_mepc_\label_suffix:
-//     csrw mepc, t1
-// .endm
-
-.macro INCREMENT_MEPC label_suffix
-    csrr t1, mepc
-    lw t5, 0(t1)
-    li t2, 3
-    and t2, t2, t5
-    li t3, 3
-    bne t2, t3, not_32_bit_Instr_\label_suffix
-    addi t1, t1, 4
-    j write_mepc_\label_suffix
-
-not_32_bit_Instr_\label_suffix:
-    addi t1, t1, 2
-
-write_mepc_\label_suffix:
-    csrw mepc, t1
-    
-.endm
+.macro INCREMENT_MEPC label_suffix                                 ;\
+    csrr t1, mepc                                                  ;\
+    lw t5, 0(t1)                                                   ;\
+    li t2, 3                                                       ;\
+    and t2, t2, t5                                                 ;\
+    li t3, 3                                                       ;\
+    bne t2, t3, not_32_bit_Instr_\label_suffix                     ;\
+    addi t1, t1, 4                                                 ;\
+    j write_mepc_\label_suffix                                     ;\
+not_32_bit_Instr_\label_suffix:                                    ;\
+    addi t1, t1, 2                                                 ;\
+write_mepc_\label_suffix:                                          ;\
+    csrw mepc, t1                                                  ;\
+.endm                                                              ;
