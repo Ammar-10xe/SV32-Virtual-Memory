@@ -61,17 +61,17 @@ exit:                                                              ;\
 
 #define COREV_VERIF_EXIT_LOGIC                                     ;\
 exit:                                                              ;\
-	slli x1, x1, 1                                                 ;\
+    slli x1, x1, 1                                                 ;\
     addi x1, x1, 1                                                 ;\
     mv x30, s1                                                     ;\
-	sw x1, tohost, x30                                             ;\
-	self_loop: j self_loop                                         ;
+    sw x1, tohost, x30                                             ;\
+    self_loop: j self_loop                                         ;
 
 #define ALL_MEM_PMP                                                ;\
-    li t2, -1		                                               ;\
-	csrw pmpaddr0, t2                                              ;\
-	li t2, 0x0F		                                               ;\
-	csrw pmpcfg0, t2                                               ;\
+    li t2, -1		                                           ;\
+    csrw pmpaddr0, t2                                              ;\
+    li t2, 0x0F		                                           ;\
+    csrw pmpcfg0, t2                                               ;\
     sfence.vma                                                     ;
 
 
