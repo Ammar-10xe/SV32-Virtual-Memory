@@ -151,25 +151,25 @@ vm_en:
     li t1,10
 pre_load:
 
-    TEST_PROLOG(check_load, CAUSE_LOAD_ACCESS)
+    TEST_PROLOG(check_load, CAUSE_LOAD_ACCESS)                      # load the addr and expected cause
 
-check_load:
+check_load:                                                         # test the load access
 
     lw t1,0(a1)  
     nop
 
-pre_store:
+pre_store:                                                      
 
-    TEST_PROLOG(check_store, CAUSE_STORE_ACCESS)
+    TEST_PROLOG(check_store, CAUSE_STORE_ACCESS)                    # load the addr and expected cause
 
-check_store:
+check_store:                                                        # test the store access
     sw t1,0(a1)
     nop                          
     ecall
 
 pre_execute:
 
-    TEST_PROLOG(check_execute, CAUSE_FETCH_ACCESS)
+    TEST_PROLOG(check_execute, CAUSE_FETCH_ACCESS)                  # load the addr and expected cause
 
     li t2, (PMP_NAPOT | PMP_X | PMP_W | PMP_R)
     csrc pmpcfg0, t2                                                # Clear PMP Region 1 Configration
@@ -185,7 +185,7 @@ pre_execute:
         CHANGE_T0_U_MODE(a1)                                        # changes mode M to U and set the MEPC 
     #endif
 
-check_execute:
+check_execute:                                                      # test the execute access
     li t1, 0x45                                                     # page fault should raise
 
 COREV_VERIF_EXIT_LOGIC                                              # Exit logic 
