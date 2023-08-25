@@ -52,7 +52,7 @@ next_instr:
 
     INCREMENT_MEPC                                                         # update the value of mepc 
     li t1,MSTATUS_MPP                                                      # update the MPP to MSTATUS_MPP for M mode
-    csrw mstatus,t1                                                        # update the value mstatus MPP 
+    csrs mstatus,t1                                                        # update the value mstatus MPP 
     mret
 
 .text
