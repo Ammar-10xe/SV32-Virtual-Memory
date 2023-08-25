@@ -111,9 +111,9 @@ vm_en:
     li t1,10
 pre_load:
 
-    TEST_PROLOG(check_load, CAUSE_LOAD_PAGE_FAULT)
+    TEST_PROLOG(check_load, CAUSE_LOAD_PAGE_FAULT)                  # load the addr and expected cause
 
-check_load:
+check_load:                                                         # test the load access
 
     lw t1,0(a1)  
     nop

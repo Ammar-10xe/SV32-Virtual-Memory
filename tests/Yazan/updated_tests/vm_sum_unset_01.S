@@ -107,25 +107,25 @@ vm_en:
     li t1,10
 pre_load:
 
-    TEST_PROLOG(check_load, CAUSE_LOAD_PAGE_FAULT)
+    TEST_PROLOG(check_load, CAUSE_LOAD_PAGE_FAULT)                  # load the addr and expected cause
 
-check_load:
+check_load:                                                         # test the load access
 
     lw t1,0(a1)  
     nop
 
 pre_store:
 
-    TEST_PROLOG(check_store, CAUSE_STORE_PAGE_FAULT)
+    TEST_PROLOG(check_store, CAUSE_STORE_PAGE_FAULT)                # load the addr and expected cause
 
-check_store:
+check_store:                                                        # test the store access
     sw t1,0(a1)
     nop                          
     ecall
 
 pre_execute:
 
-    TEST_PROLOG(check_execute, CAUSE_FETCH_PAGE_FAULT)
+    TEST_PROLOG(check_execute, CAUSE_FETCH_PAGE_FAULT)              # load the addr and expected cause
   
 
 PTE_LEVEL1_SUPERVISOR_EXECUTE:
@@ -144,7 +144,7 @@ PTE_LEVEL1_SUPERVISOR_EXECUTE:
     la a1,check_execute                                             # loads the address of check_execute
     CHANGE_T0_S_MODE(a1)                                            # changes mode M to S and set the MEPC 
 
-check_execute:
+check_execute:                                                      # test the execute access
     li t1, 0x45                                                     # page fault should raise 
 
 COREV_VERIF_EXIT_LOGIC                                              # Exit logic 
