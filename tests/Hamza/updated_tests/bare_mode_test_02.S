@@ -87,7 +87,7 @@ PTE_LEVEL1_SUPERVISOR:
 
 # ----------------Set the SATP and change the mode---------------------
 
-    csrw satp, x0           	                                            # Write satp with all zeros (bare mode)
+    csrw satp, 0x04           	                                            # Write satp with no zero value (bare mode)
     li a1 , 0x82000000                                                      # loads the address of check_access
     CHANGE_T0_S_MODE(a1)                                                    # changes mode M to S and set the MEPC 
 
@@ -112,7 +112,7 @@ PTE_LEVEL1_USER:
 
 # ----------------Set the SATP to Bare_Mode and change the mode---------------------
 
-    csrw satp, x0           	                                            # Write satp with all zeros (bare mode)
+    csrw satp, 0x04           	                                            # Write satp with no zero value (bare mode)
     li a1 , 0x82000000                                                      # loads the address of check_access
     CHANGE_T0_U_MODE(a1)                                                    # changes mode M to S and set the MEPC  
 
