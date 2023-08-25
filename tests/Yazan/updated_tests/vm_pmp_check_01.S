@@ -9,6 +9,22 @@
 #                      raise access fault exception.                                            #
 #################################################################################################   
 
+#===============================================================================
+#   🌟 PMP permissions on Physical Address at Level1 PTE 🌟
+#-------------------------------------------------------------------------------
+# Test Description:
+#
+# If PTE has valid and non-reserved RWX permissions, but the translated 
+# Physical address (pte.ppn of leaf PTE + offset) does not have (r,w,x) 
+# PMP permissions, then accessing the translated Physical address would 
+# raise access fault exception. 
+#
+# 💫 Set PMP.X = 0 and test the execute access
+# 💫 Set PMP.R = 0 and test the read access
+# 💫 Set PMP.W = 0 and test the write access
+#
+#================================================================================
+
 #include "../../../macros1.h"
 
 #define NAPOT_RANGE_4KB 0x1FF                                       # Set 4kB range with NAPOT
@@ -50,7 +66,7 @@ next_instr:
 
     INCREMENT_MEPC                                                  # update the value of mepc 
     li t1,MSTATUS_MPP                                               # update the MPP to MSTATUS_MPP for M mode
-    csrw mstatus,t1                                                 # update the value mstatus MPP 
+    csrs mstatus,t1                                                 # update the value mstatus MPP 
     mret
 
 .text

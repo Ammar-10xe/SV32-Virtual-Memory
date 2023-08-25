@@ -6,7 +6,23 @@
 # Feature Discription: If implementation does not sets the pte.A on accessing the PTE, and PTE  #
 #                      has pte.A=0, then accessing it would raise page fault exception of the   #
 #                      corresponding access type.                                               #
-#################################################################################################  
+################################################################################################# 
+
+#=======================================================================
+#   🌟 Access Bit Implementation of Level1 PTE 🌟
+#-----------------------------------------------------------------------
+# Test Description:
+#
+# If implementation does not sets the pte.A on accessing the PTE, and PTE
+# has pte.A=0, then accessing it would raise page fault exception of the
+# corresponding access type.  
+#
+# 💫 Set PTE.A = 0 and test the read access.
+# 💫 Set PTE.A = 0 and test the write access.
+# 💫 Set PTE.A = 0 and test the execute access.
+#
+#=======================================================================
+
 
 #include "../../../macros1.h"
 
@@ -46,7 +62,7 @@ next_instr:
 
     INCREMENT_MEPC                                                  # update the value of mepc 
     li t1,MSTATUS_MPP                                               # update the MPP to MSTATUS_MPP for M mode
-    csrw mstatus,t1                                                 # update the value mstatus MPP 
+    csrs mstatus,t1                                                 # update the value mstatus MPP 
     mret
 
 .text
@@ -172,12 +188,13 @@ PTE_LEVEL1_USER_EXECUTE:
 check_execute:
     li t1, 0x45                                                     # page fault should raise 
 
-    addi s11,s11,1
-    li t1,1
-    beq s11,t1,PTE_LEVEL1_USER
-    j exit
+    la a1, rvtest_data
+    lw t1, 8(a1)
+    bne t1, x0, exit 
 
 PTE_LEVEL1_USER:
+
+    sw t4, 8(a1)
 
 # ----------------LEVEL 1 PTE Setup for load and store test---------------------
 
@@ -220,7 +237,7 @@ COREV_VERIF_EXIT_LOGIC                                              # Exit logic
     rvtest_data:   
         .word 0xbeefcafe                                                 
         .word 0xdeadcafe                                                 
-        .word 0xcafecafe                                                 
+        .word 0x00000000                                                 
         .word 0x00000000  
 .align 12                                                      
     pgtb_l1:                                                       
