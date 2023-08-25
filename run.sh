@@ -33,6 +33,9 @@ while [[ $# -gt 0 ]]; do
     -spike)
       run_spike=true
       ;;
+    -smode)
+      run_in_smode=true
+      ;;
     *)
       break
       ;;
@@ -47,7 +50,11 @@ asm_test_file="$2"
 # Step 4: Compile the file
 echo "Compiling the file..."
 # riscv32-unknown-elf-gcc -march=rv32gc -mabi=ilp32 -nostdlib -T "$linker_file" "$asm_test_file" -o ./logs/test.elf
-riscv32-unknown-elf-gcc -march=rv32izicsr -Dsmode=True -mabi=ilp32 -nostdlib -T "$linker_file" "$asm_test_file" -o ./logs/test.elf
+if [ "$run_in_smode" = true ]; then
+  riscv32-unknown-elf-gcc -march=rv32izicsr -Dsmode=True -mabi=ilp32 -nostdlib -T "$linker_file" "$asm_test_file" -o ./logs/test.elf
+else
+  riscv32-unknown-elf-gcc -march=rv32izicsr -mabi=ilp32 -nostdlib -T "$linker_file" "$asm_test_file" -o ./logs/test.elf
+fi
 echo "Compilation completed."
 
 # Step 5: Generate the log file for Sail
