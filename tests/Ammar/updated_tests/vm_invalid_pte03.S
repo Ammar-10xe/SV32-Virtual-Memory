@@ -18,12 +18,6 @@
 
 #include "../../../macros1.h"
 
-#ifdef smode
-    #define SET_PTE_U 0
-#else
-    #define SET_PTE_U PTE_U
-#endif
-
 trap_handler:
 
     csrr t0, mcause                                                        # read the value of mcause 
@@ -79,27 +73,25 @@ PTE_LEVEL1_SUPERVISOR:
 
     la a1,vm_en                                                            # loads the address of label vm_en
     mv a0, a1                                                              # generrates the VA for label vm_en
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V )              # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_V )                          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # generrates the VA for label rvtest_data
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_R )      # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R )                  # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
     mv a0, a1                                                              # generrates the VA for label rvtest_data                                          
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_W | PTE_R | PTE_V )      # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V )                  # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
-    SATP_SETUP_SV32(pgtb_l1)                                        # set the SATP for virtualization
-    la a1,vm_en                                                     # loads the address of vm_en
-    #ifdef smode
-        CHANGE_T0_S_MODE(a1)                                        # changes mode M to S and set the MEPC value to a1
-    #else
-        CHANGE_T0_U_MODE(a1)                                        # changes mode M to U and set the MEPC value to a1
-    #endif
+
+
+    SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
+    la a1,vm_en                                                            # loads the address of vm_en 
+    CHANGE_T0_S_MODE(a1)                                                   # changes mode M to S and set the MEPC value to a1
 
 # ----------------Virtualization Enabeled------------------------------
 
@@ -130,23 +122,41 @@ check_store:
 pre_execute:
 
     TEST_PROLOG(check_execute,CAUSE_FETCH_PAGE_FAULT)                       # load the addr and expected cause 
+    la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
-# -------------LEVEL 1 PTE Setup for execute test------------------------
-                                                                    # Setup a new PTE to test execute
-    la a1,check_execute                                             # loads the address of label vm_en
-    mv a0, a1                                                       # VA = PA - Identity Map
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X )               # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                 # setup the PTE for level1
+    lw t1,12(a1)                                                            # load the value 4th word of rvtest_data
+    bne t1, x0,PTE_LEVEL1_USER_EXECUTE                                      # test if the data load is'nt zero goto PTE_LEVEL1_USER_EXECUTE        
+    sw t4,12(a1)                                                            # store a random value
+    
+PTE_LEVEL1_SUPERVISOR_EXECUTE:
+
+# -------------LEVEL 1 PTE Setup for execute test----------------------
+                                                                            # Setup a new PTE to test execute 
+    la a1,check_execute                                                     # loads the address of label vm_en
+    mv a0, a1 
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R )                   # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
 
-    SATP_SETUP_SV32(pgtb_l1)                                        # set the SATP for virtualization
-    la a1,check_execute                                             # loads the address of check_execute
-    #ifdef smode
-        CHANGE_T0_S_MODE(a1)                                        # changes mode M to S and set the MEPC
-    #else
-        CHANGE_T0_U_MODE(a1)                                        # changes mode M to U and set the MEPC
-    #endif
+    SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
+    la a1,check_execute                                                     # loads the address of check_execute
+    CHANGE_T0_S_MODE(a1)                                                    # changes mode M to S and set the MEPC 
+
+PTE_LEVEL1_USER_EXECUTE:
+
+# -------------LEVEL 1 PTE Setup for execute test----------------------
+                                                                            # Setup a new PTE to test execute 
+    la a1,check_execute                                                     # loads the address of label vm_en
+    mv a0, a1 
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R )           # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
+
+# ----------------Set the SATP and change the mode---------------------
+
+    SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
+    la a1,check_execute                                                     # loads the address of check_execute
+    CHANGE_T0_U_MODE(a1)                                                    # changes mode M to S and set the MEPC 
 
 
 check_execute:
@@ -157,6 +167,32 @@ check_execute:
     bne t1,x0,exit                                                          # test the branch condition 
     sw t4,8(a1)                                                             # store a random value 
     
+
+PTE_LEVEL1_USER:
+
+# ----------------LEVEL 1 PTE Setup for load and store test------------
+
+    la a1,vm_en                                                             # loads the address of label vm_en
+    mv a0, a1                                                               # generrates the VA for label vm_en
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
+ 
+    la a1,rvtest_data                                                       # loads the address of label rvtest_data
+    mv a0, a1                                                               # generrates the VA for label rvtest_data
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R )           # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
+
+    la a1,rvtest_check                                                      # loads the address of label rvtest_data
+    mv a0, a1                                                               # generrates the VA for label rvtest_data                                          
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V)    # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
+
+# ----------------Set the SATP and change the mode---------------------
+
+
+    SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
+    la a1,vm_en                                                             # loads the address of vm_en 
+    CHANGE_T0_U_MODE(a1)                                                    # changes mode M to S and set the MEPC value to a1
 
 
 
