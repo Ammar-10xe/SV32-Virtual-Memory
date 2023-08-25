@@ -75,10 +75,10 @@ exit:                                                              ;\
     sfence.vma                                                     ;
 
 
-#define INCREMENT_MEPC                                             ;\
-   csrr t3,mepc                                                    ;\
-    addi t3,t3,4                                                   ;\
-    csrw mepc,t3                                                   ;
+// #define INCREMENT_MEPC                                             ;\
+//    csrr t3,mepc                                                    ;\
+//     addi t3,t3,4                                                   ;\
+//     csrw mepc,t3                                                   ;
  
 #define TEST_PROLOG(ADDR,CAUSE)                                    ;\
     la t1, rvtest_check                                            ;\
@@ -116,3 +116,21 @@ exit:                                                              ;\
 // write_mepc_\label_suffix:
 //     csrw mepc, t1
 // .endm
+
+.macro INCREMENT_MEPC label_suffix
+    csrr t1, mepc
+    lw t5, 0(t1)
+    li t2, 3
+    and t2, t2, t5
+    li t3, 3
+    bne t2, t3, not_32_bit_Instr_\label_suffix
+    addi t1, t1, 4
+    j write_mepc_\label_suffix
+
+not_32_bit_Instr_\label_suffix:
+    addi t1, t1, 2
+
+write_mepc_\label_suffix:
+    csrw mepc, t1
+    
+.endm
