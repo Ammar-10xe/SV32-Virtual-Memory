@@ -193,12 +193,13 @@ PTE_LEVEL0_USER_EXECUTE:
 check_execute:
     li t1, 0x45                                                     # page fault should raise 
 
-    addi s11,s11,1
-    li t1,1
-    beq s11,t1,PTE_LEVEL0_USER
-    j exit
+    la a1, rvtest_data
+    lw t1, 8(a1)
+    bne t1, x0, exit 
 
 PTE_LEVEL0_USER:
+
+    sw t4, 8(a1)
 
 # ----------------LEVEL 1 PTE Setup for load and store test---------------------
 
@@ -238,7 +239,7 @@ rvtest_check:
 rvtest_data:   
     .word 0xbeefcafe                                                 
     .word 0xdeadcafe                                                 
-    .word 0xcafecafe                                                 
+    .word 0x00000000                                                 
     .word 0x00000000  
 .align 12                                                      
     pgtb_l1:                                                       
