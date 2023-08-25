@@ -30,41 +30,6 @@
     #define SET_PTE_U PTE_U
 #endif
 
-trap_handler:
-    csrr t0, mcause                                                     # read the value of mcause
-    la t1, rvtest_check                                                 # load the address of trvtest_check
-
-    lw t2, 0(t1)                                                        # if cause expected then load 1 else 0
-    lw t3, 4(t1)                                                        # load the expected value of mepc
-    lw t4, 8(t1)                                                        # load the expected value of mcause
-
-    li  t1, CAUSE_SUPERVISOR_ECALL                                      # load the value of supervisor ecall
-    beq t0,t1,next_instr                                                # checks if ecall is occured
-
-    li  t1, CAUSE_USER_ECALL                                            # load the value of user ecall
-    beq t0,t1,next_instr                                                # checks for ecall is occured
-
-    beqz t2, exit                                                       # Jumps to exit if cause is not expected
-    csrr t5,mepc                                                        # read the value of mepc
-
-    bne t3,t5,exit                                                      # check the value of mepc with it's expected value
-    bne  t0, t4, exit                                                   # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
-
-    li t5, CAUSE_FETCH_PAGE_FAULT                                       # load the value of fetch page fault exception
-    beq t0,t5,next_instr                                                # if fetch page fault jump to next instr in M mode
-
-continue_execution:
-
-    INCREMENT_MEPC   _SUMODE_                                           # update the value of mepc
-    mret
-
-next_instr:
-
-    INCREMENT_MEPC   _MMODE_                                            # update the value of mepc
-    li t1,MSTATUS_MPP                                                   # update the MPP to MSTATUS_MPP for M mode
-    csrs mstatus,t1                                                     # update the value mstatus MPP
-    mret
-
 .text
 .global _start
 
@@ -118,6 +83,42 @@ check_load:                                                             # test t
     lw t1,0(a1)  
     nop
     ecall
+    j exit
+
+trap_handler:
+    csrr t0, mcause                                                     # read the value of mcause
+    la t1, rvtest_check                                                 # load the address of trvtest_check
+
+    lw t2, 0(t1)                                                        # if cause expected then load 1 else 0
+    lw t3, 4(t1)                                                        # load the expected value of mepc
+    lw t4, 8(t1)                                                        # load the expected value of mcause
+
+    li  t1, CAUSE_SUPERVISOR_ECALL                                      # load the value of supervisor ecall
+    beq t0,t1,next_instr                                                # checks if ecall is occured
+
+    li  t1, CAUSE_USER_ECALL                                            # load the value of user ecall
+    beq t0,t1,next_instr                                                # checks for ecall is occured
+
+    beqz t2, exit                                                       # Jumps to exit if cause is not expected
+    csrr t5,mepc                                                        # read the value of mepc
+
+    bne t3,t5,exit                                                      # check the value of mepc with it's expected value
+    bne  t0, t4, exit                                                   # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+
+    li t5, CAUSE_FETCH_PAGE_FAULT                                       # load the value of fetch page fault exception
+    beq t0,t5,next_instr                                                # if fetch page fault jump to next instr in M mode
+
+continue_execution:
+
+    INCREMENT_MEPC   _SUMODE_                                           # update the value of mepc
+    mret
+
+next_instr:
+
+    INCREMENT_MEPC   _MMODE_                                            # update the value of mepc
+    li t1,MSTATUS_MPP                                                   # update the MPP to MSTATUS_MPP for M mode
+    csrs mstatus,t1                                                     # update the value mstatus MPP
+    mret
 
 COREV_VERIF_EXIT_LOGIC                                                  # Exit logic 
 
