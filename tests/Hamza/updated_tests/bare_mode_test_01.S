@@ -4,15 +4,12 @@
 # Test Description:
 #
 # If PTE does not have the SATP setuped then, accessing it
-# would raise a page fault exception of the corresponding access type.
+# would raise a ILLEGAL_INSTRUCTION fault exception.
 # When satp.mode=Bare and PTE has (r,w,x) PMP permissions, this test
 # covers the following scenarios in both supervisor and user privilege
 # modes for level1 PTE.
 #
-# 💫 Set SATP = Bare and test the read access.
-# 💫 Set SATP = Bare and test the write access.
-# 💫 Set SATP = Bare and test the execute access.
-#
+# 💫 Set SATP = Bare and rest bits to zeros and test the access to PTE.
 #=======================================================================
 
 #include "../../../macros1.h"
@@ -39,14 +36,8 @@ trap_handler:
 
     bne  t0, t4, exit                                                      # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
-    li t5, CAUSE_FETCH_ACCESS                                              # load the value of fetch access fault
-    beq t0, t5, next_instr                                                 # if fetch access fault jump to next instr in M mode  
-
-    li t5, CAUSE_FETCH_PAGE_FAULT                                          # load the value of fetch page fault exception 
-    beq t0,t5,next_instr                                                   # if fetch page fault jump to next instr in M mode
-
-    li t5, CAUSE_ILLEGAL_INSTRUCTION                                       # load the value of fetch page fault exception 
-    beq t0,t5,next_instr                                                   # if fetch page fault jump to next instr in M mode
+    li t5, CAUSE_ILLEGAL_INSTRUCTION                                       # load the value of illegal instruction fault 
+    beq t0,t5,Back_to_check_access                                         # if illegal instruction fault jump to check access in M mode
 
 
 continue_execution:
@@ -55,11 +46,17 @@ continue_execution:
     mret
 
 next_instr:
-
     INCREMENT_MEPC                                                         # update the value of mepc 
     li t1,MSTATUS_MPP                                                      # update the MPP to MSTATUS_MPP for M mode
     csrs mstatus,t1                                                        # update the value mstatus MPP 
     mret
+
+Back_to_check_access:
+    la t3,check_access                                                     # loads the address of check_access
+    csrw mepc,t3                                                           # update the value of mepc with check_access address
+    li t1,MSTATUS_MPP                                                      # update the MPP to MSTATUS_MPP for M mode
+    csrs mstatus,t1                                                        # update the value mstatus MPP 
+    mret    
 
 .text
 .global _start
@@ -68,9 +65,17 @@ _start:
     ALL_MEM_PMP                                                            # PMP permission to all the mem
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
-    
-pre_execute:
+      
+PTE_LEVEL1_SUPERVISOR:
 
+# -------------LEVEL 1 PTE Setup for execute test----------------------
+                                                                            # Setup a new PTE to test execute 
+    la a1,check_access                                                     # loads the address of label vm_en
+    li a0 , 0x82000000                                                      # loads the address of label vm_en 
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )           # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
+
+# -------------------Pre_Access-------------------------------------
     la t1, rvtest_check
     li t2 , 0x82000000
     li t3, CAUSE_ILLEGAL_INSTRUCTION
@@ -80,47 +85,45 @@ pre_execute:
     sw t3, 8(t1)                                                            # store the mcause value of expected cause
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
-    lw t1,12(a1)
-    bne t1, x0,PTE_LEVEL1_USER_EXECUTE 
-    sw t4,12(a1)
-    
-PTE_LEVEL1_SUPERVISOR_EXECUTE:
-
-# -------------LEVEL 1 PTE Setup for execute test----------------------
-                                                                            # Setup a new PTE to test execute 
-    la a1,check_execute                                                     # loads the address of label vm_en
-    li a0 , 0x82000000                                                      # loads the address of label vm_en 
-    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )           # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
-
 # ----------------Set the SATP and change the mode---------------------
 
-    # SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
-    li a1 , 0x82000000                                                      # loads the address of check_execute
+    csrw satp, x0           	                                            # Write satp with all zeros (bare mode)
+    li a1 , 0x82000000                                                      # loads the address of check_access
     CHANGE_T0_S_MODE(a1)                                                    # changes mode M to S and set the MEPC 
 
-PTE_LEVEL1_USER_EXECUTE:
+PTE_LEVEL1_USER:
 
 # -------------LEVEL 1 PTE Setup for execute test----------------------
                                                                             # Setup a new PTE to test execute 
-    la a1,check_execute                                                     # loads the address of label vm_en
+    la a1,check_access                                                     # loads the address of label vm_en
     li a0 , 0x82000000 
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
 
-# ----------------Set the SATP and change the mode---------------------
+# -------------------Pre_Access-------------------------------------
+    la t1, rvtest_check
+    li t2 , 0x82000000
+    li t3, CAUSE_ILLEGAL_INSTRUCTION
+    li t4, 1    
+    sw t4, 0(t1)                                                            # store 1 to indicate cause is expected   
+    sw t2, 4(t1)                                                            # store the address where cause is expected 
+    sw t3, 8(t1)                                                            # store the mcause value of expected cause
+    la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
-    # SATP_SETUP_SV32(pgtb_l1)                                              # set the SATP for virtualization
-    li a1 , 0x82000000                                                      # loads the address of check_execute
-    CHANGE_T0_U_MODE(a1)                                                    # changes mode M to S and set the MEPC 
+# ----------------Set the SATP to Bare_Mode and change the mode---------------------
+
+    csrw satp, x0           	                                            # Write satp with all zeros (bare mode)
+    li a1 , 0x82000000                                                      # loads the address of check_access
+    CHANGE_T0_U_MODE(a1)                                                    # changes mode M to S and set the MEPC  
 
 
-check_execute:
-    li t1, 0x45                                                             # page fault should raise 
+check_access:
+    li t1, 0x45                                                             # Illegal instruction fault Should raise 
     la a1, rvtest_data
     lw t1,8(a1)
     bne t1, x0,exit 
     sw t4,8(a1)
+    j PTE_LEVEL1_USER
   
 RVTEST_EXIT_LOGIC                                                           # Exit logic 
 
