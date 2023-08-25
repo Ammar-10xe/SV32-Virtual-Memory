@@ -42,7 +42,10 @@ trap_handler:
     li t5, CAUSE_FETCH_ACCESS                                              # load the value of fetch access fault
     beq t0, t5, next_instr                                                 # if fetch access fault jump to next instr in M mode  
 
-    li t5, CAUSE_ILLEGAL_INSTRUCTION                                          # load the value of fetch page fault exception 
+    li t5, CAUSE_FETCH_PAGE_FAULT                                          # load the value of fetch page fault exception 
+    beq t0,t5,next_instr                                                   # if fetch page fault jump to next instr in M mode
+
+    li t5, CAUSE_ILLEGAL_INSTRUCTION                                       # load the value of fetch page fault exception 
     beq t0,t5,next_instr                                                   # if fetch page fault jump to next instr in M mode
 
 
@@ -65,11 +68,11 @@ _start:
     ALL_MEM_PMP                                                            # PMP permission to all the mem
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
-
+    
 pre_execute:
 
     la t1, rvtest_check
-    la t2, check_execute
+    li t2 , 0x82000000
     li t3, CAUSE_ILLEGAL_INSTRUCTION
     li t4, 1    
     sw t4, 0(t1)                                                            # store 1 to indicate cause is expected   
@@ -78,48 +81,47 @@ pre_execute:
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
     lw t1,12(a1)
-    bne t1, x0,PTE_LEVEL1_USER 
+    bne t1, x0,PTE_LEVEL1_USER_EXECUTE 
     sw t4,12(a1)
     
-PTE_LEVEL1_SUPERVISOR:
+PTE_LEVEL1_SUPERVISOR_EXECUTE:
 
 # -------------LEVEL 1 PTE Setup for execute test----------------------
                                                                             # Setup a new PTE to test execute 
     la a1,check_execute                                                     # loads the address of label vm_en
-    li a0,0x82000000  
+    li a0 , 0x82000000                                                      # loads the address of label vm_en 
     ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )           # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
 
     # SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
-    li a1,0x82000000                                                     # loads the address of check_execute
+    li a1 , 0x82000000                                                      # loads the address of check_execute
     CHANGE_T0_S_MODE(a1)                                                    # changes mode M to S and set the MEPC 
 
-PTE_LEVEL1_USER:
+PTE_LEVEL1_USER_EXECUTE:
 
 # -------------LEVEL 1 PTE Setup for execute test----------------------
                                                                             # Setup a new PTE to test execute 
     la a1,check_execute                                                     # loads the address of label vm_en
-    li a0, 0x82000000 
+    li a0 , 0x82000000 
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
 
-    # SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
-    li a1,0x82000000                                                     # loads the address of check_execute
+    # SATP_SETUP_SV32(pgtb_l1)                                              # set the SATP for virtualization
+    li a1 , 0x82000000                                                      # loads the address of check_execute
     CHANGE_T0_U_MODE(a1)                                                    # changes mode M to S and set the MEPC 
 
 
 check_execute:
     li t1, 0x45                                                             # page fault should raise 
-
-    addi s11,s11,1
-    li t1,1
-    beq s11,t1,PTE_LEVEL1_USER
-    j exit
-
+    la a1, rvtest_data
+    lw t1,8(a1)
+    bne t1, x0,exit 
+    sw t4,8(a1)
+  
 RVTEST_EXIT_LOGIC                                                           # Exit logic 
 
 .data  
@@ -133,7 +135,7 @@ RVTEST_EXIT_LOGIC                                                           # Ex
     rvtest_data:   
         .word 0xbeefcafe                                                 
         .word 0xdeadcafe                                                 
-        .word 0xcafecafe                                                 
+        .word 0x00000000                                                 
         .word 0x00000000 
 .align 12                                                      
     pgtb_l1:                                                       

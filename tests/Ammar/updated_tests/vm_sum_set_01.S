@@ -1,25 +1,20 @@
-#################################################################################################   
-# Verification Goal:   Set mstatus.SUM = 0, check execute, read and write access on U-mode      #
-#                      page PTE at level 1 in supervisor mode. Should raise fetch, load and     #
-#                      store/amo page fault respectively                                        #
-#                                                                                               # 
-# Feature Discription: If PTE belongs to user mode i.e. its U permission bit is set (pte.u = 1) #
-#                      and m/sstatus.SUM = 0, then accessing that PTE in supervisor mode would  #
-#                      raise page fault exception of the corresponding access type.             #
-#################################################################################################
-
 #=======================================================================================
-#   🌟 RWX access on U-mode pages in S-mode with s/mstatus.SUM unset at Level1 PTE 🌟
+#   🌟 RWX access on U-mode pages in S-mode with s/mstatus.SUM set  for level1 PTE 🌟
 #---------------------------------------------------------------------------------------
 # Test Description:
 #
-# If PTE belongs to user mode i.e. its U permission bit is set (pte.u = 1) 
-# and m/sstatus.SUM = 0, then accessing that PTE in supervisor mode would 
-# raise page fault exception of the corresponding access type.   
+# If PTE belongs to user mode i.e. its U permission bit is set (pte.u = 1) and
+# m/sstatus.SUM = 1, then RW access to that PTE in supervisor mode would be
+# successful but eXecute access would raise instruction page fault exception in s-mode.
+# When satp.mode=sv32, PTE has (r,w,x) PMP permissions, PTE has non-reserved RWX 
+# encoding, and pte.v=1, then test the following in supervisor mode for level1 PTE.  
 #
-# 💫 Set PTE.U = 1 and test the execute access
-# 💫 Set PTE.U = 1 and test the read access
-# 💫 Set PTE.U = 1 and test the write access
+# 💫 Set pte.r=1 & pte.u=1 & s/mstatus.SUM = 1 and test the read acces.
+
+# 💫 Set pte.w=1 & pte.u=1 & s/mstatus.SUM = 1 and test the write access.
+
+# 💫 Set pte.x=1 & pte.u=1 & s/mstatus.SUM = 1 and test the execute access.
+
 #
 #=======================================================================================
 
@@ -27,87 +22,87 @@
 
 trap_handler:
 
-    csrr t0, mcause                                                        # read the value of mcause 
-    la t1, rvtest_check                                                    # load the address of trvtest_check
+    csrr t0, mcause                                                         # read the value of mcause 
+    la t1, rvtest_check                                                     # load the address of trvtest_check
     
-    lw t2, 0(t1)                                                           # if cause expected then load 1 else 0
-    lw t3, 4(t1)                                                           # load the expected value of mepc 
-    lw t4, 8(t1)                                                           # load the expected value of mcause  
+    lw t2, 0(t1)                                                            # if cause expected then load 1 else 0
+    lw t3, 4(t1)                                                            # load the expected value of mepc 
+    lw t4, 8(t1)                                                            # load the expected value of mcause  
 
-    li  t1, CAUSE_SUPERVISOR_ECALL                                         # load the value of supervisor ecall
-    beq t0,t1,next_instr                                                   # checks if ecall is occured
+    li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
+    beq t0,t1,next_instr                                                    # checks if ecall is occured
 
-    li  t1, CAUSE_USER_ECALL                                               # load the value of user ecall
-    beq t0,t1,next_instr                                                   # checks for ecall is occured
+    li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
+    beq t0,t1,next_instr                                                    # checks for ecall is occured
 
-    beqz t2, exit                                                          # Jumps to exit if cause is not expected
+    beqz t2, exit                                                           # Jumps to exit if cause is not expected
  
-    csrr t5,mepc                                                           # read the value of mepc 
-    bne t3,t5,exit                                                         # check the value of mepc with it's expected value
+    csrr t5,mepc                                                            # read the value of mepc 
+    bne t3,t5,exit                                                          # check the value of mepc with it's expected value
 
-    bne  t0, t4, exit                                                      # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+    bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
-    li t5, CAUSE_FETCH_ACCESS                                              # load the value of fetch access fault
-    beq t0, t5, next_instr                                                 # if fetch access fault jump to next instr in M mode  
+    li t5, CAUSE_FETCH_ACCESS                                               # load the value of fetch access fault
+    beq t0, t5, next_instr                                                  # if fetch access fault jump to next instr in M mode  
 
-    li t5, CAUSE_FETCH_PAGE_FAULT                                          # load the value of fetch page fault exception 
-    beq t0,t5,next_instr                                                   # if fetch page fault jump to next instr in M mode
+    li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
+    beq t0,t5,next_instr                                                    # if fetch page fault jump to next instr in M mode
 
 continue_execution:
 
-    INCREMENT_MEPC                                                         # update the value of mepc 
+    INCREMENT_MEPC                                                          # update the value of mepc 
     mret
 
 next_instr:
 
-    INCREMENT_MEPC                                                         # update the value of mepc 
-    li t1,MSTATUS_MPP                                                      # update the MPP to MSTATUS_MPP for M mode
-    csrs mstatus,t1                                                        # update the value mstatus MPP 
+    INCREMENT_MEPC                                                          # update the value of mepc 
+    li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
+    csrs mstatus,t1                                                         # update the value mstatus MPP 
     mret
 
 .text
 .global _start
 
 _start:
-    ALL_MEM_PMP                                                     # PMP permission to all the mem
-    la t1,trap_handler                                              # loads the address of trap handler 
-    csrw mtvec,t1                                                   # sets the mtvec to trap handler
+    ALL_MEM_PMP                                                             # PMP permission to all the mem
+    la t1,trap_handler                                                      # loads the address of trap handler 
+    csrw mtvec,t1                                                           # sets the mtvec to trap handler
     
 PTE_LEVEL1_SUPERVISOR:
 
-# ----------------LEVEL 1 PTE Setup for load and store test---------------------
+# ----------------LEVEL 1 PTE Setup for load and store test--------------
 
-    la a1,vm_en                                                     # loads the address of label vm_en
-    mv a0, a1                                                       # VA = PA - Identity Map
-    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                          # setup the PTE for level1
+    la a1,vm_en                                                             # loads the address of label vm_en
+    mv a0, a1                                                               # VA = PA - Identity Map
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )           # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
  
-    la a1,rvtest_data                                               # loads the address of label rvtest_data
-    mv a0, a1                                                       # VA = PA - Identity Map
+    la a1,rvtest_data                                                       # loads the address of label rvtest_data
+    mv a0, a1                                                               # VA = PA - Identity Map
    
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V ) # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                          # setup the PTE for level1   
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1   
 
-    la a1,rvtest_check                                              # loads the address of label rvtest_data
-    mv a0, a1                                                       # VA = PA - Identity Map                                         
-    ori a2, x0, ( PTE_U | PTE_W | PTE_R | PTE_V)                    # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                          # setup the PTE for level1
+    la a1,rvtest_check                                                      # loads the address of label rvtest_data
+    mv a0, a1                                                               # VA = PA - Identity Map                                         
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V)            # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
 
 
-    SATP_SETUP_SV32(pgtb_l1)                                        # set the SATP for virtualization
+    SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
     li a1, MSTATUS_SUM
-    csrs mstatus, a1                                                # Clear mstatus.SUM
-    la a1,vm_en                                                     # loads the address of vm_en
-    CHANGE_T0_S_MODE(a1)                                            # changes mode M to S and set the MEPC value to a1
+    csrs mstatus, a1                                                        # Clear mstatus.SUM
+    la a1,vm_en                                                             # loads the address of vm_en
+    CHANGE_T0_S_MODE(a1)                                                    # changes mode M to S and set the MEPC value to a1
 
-# ----------------Virtualization Enabeled---------------------
+# ----------------Virtualization Enabeled------------------------------
 
 vm_en:
 
     li t1,10
-    la a1, rvtest_data                                              # loads the address of label rvtest_data
+    la a1, rvtest_data                                                      # loads the address of label rvtest_data
 
 check_load:
 
@@ -115,20 +110,21 @@ check_load:
     nop
 
 check_store:
+
     sw t1,0(a1)
     nop                          
-    ecall
+    ecall                                                                   # ecall to go to M mode
 
 pre_execute:
 
-    la t1, rvtest_check                                             # loads the address of rvtest_check section
-    la t2, check_execute                                            # Next Exception PC
-    li t3, CAUSE_FETCH_PAGE_FAULT                                   # Next Expected Cause
+    la t1, rvtest_check                                                     # loads the address of rvtest_check section
+    la t2, check_execute                                                    # Next Exception PC
+    li t3, CAUSE_FETCH_PAGE_FAULT                                           # Next Expected Cause
     li t4, 1    
-    sw t4, 0(t1)                                                    # store 1 to indicate cause is expected   
-    sw t2, 4(t1)                                                    # store the address where cause is expected 
-    sw t3, 8(t1)                                                    # store the mcause value of expected cause
-    la a1,rvtest_data                                               # loads the address of label rvtest_data
+    sw t4, 0(t1)                                                            # store 1 to indicate cause is expected   
+    sw t2, 4(t1)                                                            # store the address where cause is expected 
+    sw t3, 8(t1)                                                            # store the mcause value of expected cause
+    la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
 
 PTE_LEVEL1_SUPERVISOR_EXECUTE:
@@ -137,7 +133,7 @@ PTE_LEVEL1_SUPERVISOR_EXECUTE:
                                                                             # Setup a new PTE to test execute 
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1 
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )                   # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode----------------------
@@ -145,29 +141,29 @@ PTE_LEVEL1_SUPERVISOR_EXECUTE:
     SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
     la a1,check_execute                                                     # loads the address of check_execute
     li a2, MSTATUS_SUM
-    csrs mstatus, a2                                                # Clear mstatus.SUM
+    csrs mstatus, a2                                                        # Clear mstatus.SUM
     CHANGE_T0_S_MODE(a1)                                                    # changes mode M to S and set the MEPC 
 
   
 check_execute:
 
-    li t1, 0x45                                                        # page fault should raise 
+    li t1, 0x45                                                             # page fault should raise 
 
-COREV_VERIF_EXIT_LOGIC                                                # Exit logic 
+COREV_VERIF_EXIT_LOGIC                                                      # Exit logic 
 
 .data  
 .align 24
     rvtest_check: 
 
-        .word 0xdeadbeef                                            # 1 for cause expected 0  for no cause 
-        .word 0xbeefdead                                            # write the value of mepc here (where  cause is expected)
-        .word 0xcafecafe                                            # write the value of expect cause 
+        .word 0xdeadbeef                                                     # 1 for cause expected 0  for no cause 
+        .word 0xbeefdead                                                     # write the value of mepc here (where  cause is expected)
+        .word 0xcafecafe                                                     # write the value of expect cause 
 .align 22                                     
     rvtest_data:   
         .word 0xbeefcafe                                                 
         .word 0xdeadcafe                                                 
-        .word 0xcafecafe                                                 
-        .word 0xbeefdead  
+        .word 0x00000000                                                 
+        .word 0x00000000   
 .align 12                                                      
     pgtb_l1:                                                       
         .zero 4096                                                 
