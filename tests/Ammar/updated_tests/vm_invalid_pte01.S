@@ -86,7 +86,12 @@ pre_store:
 check_store:
     sw t1,0(a1)                                                             # test the store access
     nop                          
-    SMODE_ECALL                                                             # ecall to go to m mode
+                                                                           
+    #ifdef smode
+      SMODE_ECALL                                                           # changes mode M to S and set the MEPC
+    #else
+     UMODE_ECALL                                                            # changes mode M to U and set the MEPC
+    #endif
 
 pre_execute:
 
