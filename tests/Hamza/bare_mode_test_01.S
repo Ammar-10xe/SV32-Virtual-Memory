@@ -118,7 +118,6 @@ PTE_LEVEL1_USER:
 
 
 check_access:
-    li t1, 0x45                                                             # Illegal instruction fault Should raise 
     la a1, rvtest_data
     lw t1,8(a1)
     bne t1, x0,exit 
