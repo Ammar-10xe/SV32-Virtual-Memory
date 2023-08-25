@@ -82,7 +82,7 @@ PTE_LEVEL1_SUPERVISOR:
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
     mv a0, a1                                                              # generrates the VA for label rvtest_data                                          
-    ori a2, x0, ( PTE_W | PTE_R | PTE_V )                                  # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V )                                  # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                 # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
@@ -97,6 +97,7 @@ PTE_LEVEL1_SUPERVISOR:
 vm_en:
 
     li t1,10
+    
 pre_load:
 
     la t1, rvtest_check
@@ -177,11 +178,12 @@ PTE_LEVEL1_USER_EXECUTE:
 
 check_execute:
     li t1, 0x45                                                             # page fault should raise 
+   
+    la a1, rvtest_data
+    lw t1,8(a1)
+    bne t1, x0,exit 
+    sw t4,8(a1)
 
-    addi s11,s11,1
-    li t1,1
-    beq s11,t1,PTE_LEVEL1_USER
-    j exit
 
 PTE_LEVEL1_USER:
 
@@ -224,7 +226,7 @@ RVTEST_EXIT_LOGIC                                                           # Ex
     rvtest_data:   
         .word 0xbeefcafe                                                 
         .word 0xdeadcafe                                                 
-        .word 0xcafecafe                                                 
+        .word 0x00000000                                                 
         .word 0x00000000 
 .align 12                                                      
     pgtb_l1:                                                       
