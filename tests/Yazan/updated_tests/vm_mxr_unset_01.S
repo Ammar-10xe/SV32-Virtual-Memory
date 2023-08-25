@@ -105,11 +105,12 @@ check_load:
     lw t1,0(a1)  
     nop
     ecall
-    bne s11, x0, exit
+    lw  t1, 12(a1)
+    bne t1, x0, exit 
 
 PTE_LEVEL1_USER:
 
-    li s11, 1
+    sw t4, 12(a1)
 
 # ----------------LEVEL 1 PTE Setup for load and store test---------------------
 
@@ -155,7 +156,7 @@ COREV_VERIF_EXIT_LOGIC                                              # Exit logic
         .word 0xbeefcafe                                                 
         .word 0xdeadcafe                                                 
         .word 0xcafecafe                                                 
-        .word 0xbeefdead  
+        .word 0x00000000  
 .align 12                                                      
     pgtb_l1:                                                       
         .zero 4096                                                 
