@@ -73,7 +73,7 @@ PTE_LEVEL1_SUPERVISOR:
 
     la a1,vm_en                                                            # loads the address of label vm_en
     mv a0, a1                                                              # generrates the VA for label vm_en
-    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_V )              as an argument to the test?             # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_V )                          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
