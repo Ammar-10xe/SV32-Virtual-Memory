@@ -131,13 +131,9 @@ pre_execute:
     sw t3, 8(t1)                                                    # store the mcause value of expected cause
     la a1,rvtest_data                                               # loads the address of label rvtest_data
 
-    addi s10,s10,1
-    li s1,1
-    li s2,2
-    beq s10,s1,PTE_LEVEL1_SUPERVISOR_EXECUTE
-    beq s10,s2,PTE_LEVEL1_USER_EXECUTE
-
-   
+    lw t1,12(a1)
+    bne t1, x0,PTE_LEVEL1_USER_EXECUTE 
+    sw t4,12(a1)   
 
 PTE_LEVEL1_SUPERVISOR_EXECUTE:
 
@@ -225,7 +221,7 @@ COREV_VERIF_EXIT_LOGIC                                              # Exit logic
         .word 0xbeefcafe                                                 
         .word 0xdeadcafe                                                 
         .word 0xcafecafe                                                 
-        .word 0xbeefdead  
+        .word 0x00000000  
 .align 12                                                      
     pgtb_l1:                                                       
         .zero 4096                                                 

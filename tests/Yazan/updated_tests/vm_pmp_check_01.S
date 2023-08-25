@@ -167,9 +167,7 @@ pre_execute:
     sw t3, 8(t1)                                                    # store the mcause value of expected cause
     la a1,rvtest_data                                               # loads the address of label rvtest_data
 
-    addi s10,s10,1
-    li s1,1
-    li s2,2
+    lw t1,12(a1)
 
     li t2, (PMP_NAPOT | PMP_X | PMP_W | PMP_R)
     csrc pmpcfg0, t2                                                # Clear PMP Region 1 Configration
@@ -177,10 +175,9 @@ pre_execute:
     csrs pmpcfg0, t2                                                # Set PMP Region 1 Configration
     sfence.vma
 
-    la a1,check_execute                                             # loads the address of check_execute
-
-    beq s10,s1,PMP_LEVEL1_SUPERVISOR_EXECUTE
-    beq s10,s2,PMP_LEVEL1_USER_EXECUTE
+    bne t1, x0,PMP_LEVEL1_USER_EXECUTE 
+    sw  t4, 12(a1)
+    la a1, check_execute                                            # loads the address of check_execute
 
 PMP_LEVEL1_SUPERVISOR_EXECUTE: 
 
@@ -188,17 +185,19 @@ PMP_LEVEL1_SUPERVISOR_EXECUTE:
 
 PMP_LEVEL1_USER_EXECUTE:
 
+    la a1, check_execute                                            # loads the address of check_execute
     CHANGE_T0_U_MODE(a1)                                            # changes mode M to S and set the MEPC 
 
 check_execute:
-    li t1, 0x45                                                     # page fault should raise 
+    li t1, 0x45                                                     # page fault should raise
 
-    bne s11, x0, exit
-    addi s11, s11, 1
+    la a1, rvtest_data
+    lw t1, 8(a1)
+    bne t1, x0, exit 
 
 PTE_LEVEL1_USER:
 
-    li s11, 1
+    sw t4, 8(a1)
 
 # ----------------LEVEL 1 PTE Setup for load and store test---------------------
 
@@ -246,8 +245,8 @@ COREV_VERIF_EXIT_LOGIC                                              # Exit logic
     rvtest_data:   
         .word 0xbeefcafe                                                 
         .word 0xdeadcafe                                                 
-        .word 0xcafecafe                                                 
-        .word 0xbeefdead  
+        .word 0x00000000                                                 
+        .word 0x00000000  
 .align 12                                                      
     pgtb_l1:                                                       
         .zero 4096                                                 
