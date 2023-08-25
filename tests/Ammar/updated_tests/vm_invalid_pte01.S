@@ -24,6 +24,9 @@
     #define SET_PTE_U PTE_U
 #endif
 
+#define _MMODE_  "M"
+#define _SUMODE_ "SU"
+
 .text
 .global _start
 
@@ -32,8 +35,6 @@ _start:
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
     
-PTE_LEVEL1_SUPERVISOR:
-
 # ----------------LEVEL 1 PTE Setup for load and store test------------
 
     la a1,vm_en                                                            # loads the address of label vm_en
@@ -85,7 +86,7 @@ pre_store:
 check_store:
     sw t1,0(a1)                                                             # test the store access
     nop                          
-    SMODE_ECALL
+    SMODE_ECALL                                                             # ecall to go to m mode
 
 pre_execute:
 
@@ -94,7 +95,7 @@ pre_execute:
 # -------------LEVEL 1 PTE Setup for execute test------------------------
                                                                             # Setup a new PTE to test execute
     la a1,check_execute                                                     # loads the address of label vm_en
-    mv a0, a1                                                               # VA = PA - Identity Map
+    mv a0, a1                                                               # set the VA to PA (identity mapping)
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X )                       # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
 
@@ -142,12 +143,12 @@ trap_handler:
 
 continue_execution:
 
-    INCREMENT_MEPC                                                          # update the value of mepc 
+    INCREMENT_MEPC  _SUMODE_                                                # update the value of mepc 
     mret                                                                    # return 
 
 next_instr:
 
-    INCREMENT_MEPC                                                          # update the value of mepc 
+    INCREMENT_MEPC  _MMODE_                                                 # update the value of mepc 
     li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
     csrs mstatus,t1                                                         # update the value mstatus MPP 
     mret                                                                    # return 
