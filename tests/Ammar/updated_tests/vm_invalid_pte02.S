@@ -79,17 +79,17 @@ PTE_LEVEL1_SUPERVISOR:
     la a1,vm_en                                                            # loads the address of label vm_en
     mv a0, a1                                                              # generrates the VA for label vm_en
     ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )          # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                 # setup the PTE for level1
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                 # setup the PTE for level0
     
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # generrates the VA for label rvtest_data
     ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R )                  # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                 # setup the PTE for level1  
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                 # setup the PTE for level0  
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
     mv a0, a1                                                              # generrates the VA for label rvtest_data                                          
     ori a2, x0, ( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V)                   # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                 # setup the PTE for level1
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                 # setup the PTE for level0
 
 # ----------------Set the SATP and change the mode---------------------
 
@@ -117,12 +117,12 @@ pre_load:
 
 check_load:
 
-    lw t1,0(a1)  
+    lw t1,0(a1)                                                             # test the load instr
     nop
 
 pre_store:
 
-    la t1, rvtest_check
+    la t1, rvtest_check                                                                 
     la t2, check_store
     li t3, CAUSE_STORE_PAGE_FAULT
     li t4, 1    
@@ -133,9 +133,9 @@ pre_store:
 
 check_store:
 
-    sw t1,0(a1)
+    sw t1,0(a1)                                                             # test the store instr
     nop                          
-    ecall
+    ecall                                                                   # ecall to go to M mode
 
 pre_execute:
 
@@ -159,7 +159,7 @@ PTE_LEVEL1_SUPERVISOR_EXECUTE:
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1 
     ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R )                   # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                  # setup the PTE for level1
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                  # setup the PTE for level0
 
 # ----------------Set the SATP and change the mode----------------------
 
@@ -174,7 +174,7 @@ PTE_LEVEL1_USER_EXECUTE:
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1 
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R )           # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                  # setup the PTE for level1
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                  # setup the PTE for level0
 
 # ----------------Set the SATP and change the mode----------------------
 
@@ -186,10 +186,10 @@ PTE_LEVEL1_USER_EXECUTE:
 check_execute:
     li t1, 0x45                                                             # page fault should raise 
 
-    la a1, rvtest_data
-    lw t1,8(a1)
-    bne t1,x0,exit 
-    sw t4,8(a1)
+    la a1, rvtest_data                                                      # loads the address of rvtest_data
+    lw t1,8(a1)                                                             # load the value in t1    
+    bne t1,x0,exit                                                          # test the branch condition 
+    sw t4,8(a1)                                                             # store a random value 
 
 PTE_LEVEL1_USER:
 

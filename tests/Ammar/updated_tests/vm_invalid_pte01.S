@@ -178,11 +178,11 @@ PTE_LEVEL1_USER_EXECUTE:
 
 check_execute:
     li t1, 0x45                                                             # page fault should raise 
-   
-    la a1, rvtest_data
-    lw t1,8(a1)
-    bne t1, x0,exit 
-    sw t4,8(a1)
+
+    la a1, rvtest_data                                                      # loads the address of rvtest_data
+    lw t1,8(a1)                                                             # load the value in t1    
+    bne t1,x0,exit                                                          # test the branch condition 
+    sw t4,8(a1)                                                             # store a random value 
 
 
 PTE_LEVEL1_USER:
