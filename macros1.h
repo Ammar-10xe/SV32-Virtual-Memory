@@ -94,7 +94,7 @@ exit:                                                              ;\
     addi t1, t1, 4                                                 ;\
     j write_mepc_\label_suffix                                     ;\
     not_32_bit_Instr_\label_suffix:                                ;\
-    addi t1, t1, 2                                                 ;\ 
+    addi t1, t1, 2                                                 ;\
     write_mepc_\label_suffix:                                      ;\
     csrw mepc, t1                                                  ;\
 .endm                                                              ;

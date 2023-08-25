@@ -24,6 +24,9 @@
     #define SET_PTE_U PTE_U
 #endif
 
+#define _MMODE_  "M"
+#define _SUMODE_ "SU"
+
 .text
 .global _start
 
@@ -88,7 +91,7 @@ pre_store:
 check_store:
     sw t1,0(a1)                                                             # test the store access
     nop  
-                            
+
     #ifdef smode
       SMODE_ECALL                                                           # changes mode M to S and set the MEPC
     #else
@@ -151,12 +154,12 @@ trap_handler:
 
 continue_execution:
 
-    INCREMENT_MEPC                                                          # update the value of mepc 
+    INCREMENT_MEPC    _SUMODE_                                              # update the value of mepc 
     mret                                                                    # return 
 
 next_instr:
 
-    INCREMENT_MEPC                                                          # update the value of mepc 
+    INCREMENT_MEPC    _MMODE_                                               # update the value of mepc 
     li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
     csrs mstatus,t1                                                         # update the value mstatus MPP 
     mret                                                                    # return 
