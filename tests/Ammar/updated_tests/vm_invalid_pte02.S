@@ -24,9 +24,6 @@ trap_handler:
     lw t3, 4(t1)                                                           # load the expected value of mepc 
     lw t4, 8(t1)                                                           # load the expected value of mcause  
 
-    li t5, CAUSE_FETCH_PAGE_FAULT                                          # load the value of fetch page fault exception 
-    beq t0,t5,next_instr                                                   # if fetch page fault jump to next instr in M mode
-
     li  t1, CAUSE_SUPERVISOR_ECALL                                         # load the value of supervisor ecall
     beq t0,t1,next_instr                                                   # checks if ecall is occured
 
@@ -40,7 +37,14 @@ trap_handler:
 
     bne  t0, t4, exit                                                      # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
+    li t5, CAUSE_FETCH_ACCESS                                              # load the value of fetch access fault
+    beq t0, t5, next_instr                                                 # if fetch access fault jump to next instr in M mode  
+
+    li t5, CAUSE_FETCH_PAGE_FAULT                                          # load the value of fetch page fault exception 
+    beq t0,t5,next_instr                                                   # if fetch page fault jump to next instr in M mode
+
 continue_execution:
+
     INCREMENT_MEPC                                                         # update the value of mepc 
     mret
 
@@ -62,21 +66,25 @@ _start:
 PTE_LEVEL1_SUPERVISOR:
 
 # ----------------LEVEL 1 PTE Setup for load and store test---------------------
+    la a1,pgtb_l0                                                          # loads the address of label vm_en
+    mv a0, a1                                                              # generrates the VA for label vm_en
+    ori a2, x0, ( PTE_V )                                                  # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                 # setup the PTE for level1
 
     la a1,vm_en                                                            # loads the address of label vm_en
     mv a0, a1                                                              # generrates the VA for label vm_en
     ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )          # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                 # setup the PTE for level1
- 
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                 # setup the PTE for level1
+    
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # generrates the VA for label rvtest_data
     ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R )                  # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                 # setup the PTE for level1   
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                 # setup the PTE for level1  
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
     mv a0, a1                                                              # generrates the VA for label rvtest_data                                          
     ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V)           # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                 # setup the PTE for level1
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                 # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
 
@@ -144,7 +152,7 @@ PTE_LEVEL1_SUPERVISOR_EXECUTE:
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1 
     ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R )                   # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                  # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
 
@@ -159,7 +167,7 @@ PTE_LEVEL1_USER_EXECUTE:
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1 
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R )           # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                  # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
 
@@ -183,17 +191,17 @@ PTE_LEVEL1_USER:
     la a1,vm_en                                                             # loads the address of label vm_en
     mv a0, a1                                                               # generrates the VA for label vm_en
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                  # setup the PTE for level1
  
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
     mv a0, a1                                                               # generrates the VA for label rvtest_data
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R )           # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                          # setup the PTE for level1   
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                          # setup the PTE for level1   
 
     la a1,rvtest_check                                                      # loads the address of label rvtest_data
     mv a0, a1                                                               # generrates the VA for label rvtest_data                                          
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V)    # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
+    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL0)                                  # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
 
@@ -207,13 +215,12 @@ PTE_LEVEL1_USER:
 RVTEST_EXIT_LOGIC                                                           # Exit logic 
 
 .data  
-.align 24
     rvtest_check: 
 
         .word 0xdeadbeef                                                    # 1 for cause expected 0  for no cause 
         .word 0xbeefdead                                                    # write the value of mepc here (where  cause is expected)
         .word 0xcafecafe                                                    # write the value of expect cause 
-.align 22                                     
+.align 12                                     
     rvtest_data:   
         .word 0xbeefcafe                                                 
         .word 0xdeadcafe                                                 
