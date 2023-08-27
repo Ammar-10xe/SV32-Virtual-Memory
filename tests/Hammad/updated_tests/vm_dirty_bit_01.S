@@ -1,151 +1,138 @@
-#################################################################################################           
-# Verification Goal: Set PTE.D = 0 and test the Write access at Supervisor Level                #
-#                                                                                               #
-# Description: 			If implementation does not sets the pte.D when PTE is written,          #
-#                       and PTE has pte.D=0, then attempting to store on that PTE would         #
-#                       raise Store/AMO page fault exception.                                   #                                                                                             #
-#################################################################################################   
+#=======================================================================
+#      Write Access of Level1 PTE in User and Supervisor mode when dirty
+#      bit is low  
+#-----------------------------------------------------------------------
+# Test Description:
+# If implementation does not sets the pte.D when PTE is written,
+# and PTE has pte.D=0, then attempting to store on that PTE would
+# raise Store/AMO page fault exception, this test
+# covers the following scenarios in both supervisor and user privilege
+# modes for level1 PTE.
+#
+#  Set PTE.D = 0 and test the write access in Supervisor Mode
+#  Set PTE.D = 0 and test the write access in User Mode
+#
+#=======================================================================
 
-#-----------------------------------------------#
-#  PTE setup -- Level 1, supervisor mode		#
-#  			No dirty permission				    #
-#  expected  --	Store/AMO Page fault			#
-#-----------------------------------------------#
+#include "../../../macros1.h"
 
-#include "model_test.h"
-#include "custom_macros1.h"
-#include "arch_test.h"
-
-RVTEST_ISA("RV32I_Zicsr")
-# Test code region
-.section .text.init
-.globl rvtest_entry_point
-rvtest_entry_point:
-RVMODEL_BOOT
-RVTEST_CODE_BEGIN
-#ifdef TEST_CASE_1
-    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def rvtest_strap_routine=True; def TEST_CASE_1=True",sv32)
-
-RVTEST_SIGBASE( x13,signature_x13_1)
-  	
-main:
-
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-#ifdef rvtest_mtrap_routine									// Verification of existance of rvtest_mtrap_routine
-	LI a4, 0xceed
-	RVTEST_SIGUPD(x13,a4)
+#ifdef smode
+    #define SET_PTE_U 0
+#else
+    #define SET_PTE_U PTE_U
 #endif
-#ifdef rvtest_strap_routine					         		// Verification of existance of rvtest_strap_routine
-	LI a4, 0xbeed
-	RVTEST_SIGUPD(x13,a4)
-#endif
-	
-	ALL_MEM_PMP          								    # set the PMP permissions for the whole memory
-	WRITE_CSR (satp,x0)  								    # Bare Mode setup
 
-#-------------------Adresses--------------------#
-	.set va,		0x90000000                  #           Page table level 1  VA   
-	.set pa,		0x80000000                  #           rvtest_entry_point physical address
-	.set va_data,	0x91000000                  #           rvtest_data Virtual address set at level 0 
-#-----------------------------------------------#
+#define _MMODE_  "M"
+#define _SUMODE_ "SU"
 
-#------------------------------------------------------PTE setup--------------------------------------------------------------
-    #PTE SETUP at level 1 -- rvtest_entry_point physical address stored
-	LI a0, pa														
-	LI a1, (PTE_D | PTE_A | PTE_G | PTE_X | PTE_W | PTE_R | PTE_V)  
-	PTE_SETUP_RV32(a0, a1, t0, t1, va, LEVEL1)
+.text
+.global _start
 
-    #PTE SETUP at level 1 -- rvtest_data physical address stored
-	LA (a0, rvtest_data)
-	LI a1, (PTE_A | PTE_G | PTE_R | PTE_X | PTE_W | PTE_V)  #dirty bit not set
-	PTE_SETUP_RV32(a0, a1, t0, t1, va_data, LEVEL1)
-#-----------------------------------------------------------------------------------------------------------------------------
+_start:
+    ALL_MEM_PMP                                                            # PMP permission to all the memory
+    la t1,trap_handler                                                     # loads the address of trap handler 
+    csrw mtvec,t1                                                          # sets the mtvec to trap handler 
+    
+# ----------------LEVEL 1 PTE Setup for load and store test------------
 
-#---------------satp mode setup-----------------#
-    LA(t6, rvtest_Sroot_pg_tbl)                 #
-    LI(t5, SATP32_MODE)                         #
-    srli t6, t6, 12                             #
-    or t6, t6, t5                               #
-    csrw satp, t6                               #
-#-----------------------------------------------#
+    la a1,vm_en                                                            # loads the address of label vm_en
+    mv a0, a1                                                              # set the VA to PA (identity mapping)
+    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V )              # sets the permission bits
+    PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l1, LEVEL1 )                     # setup the PTE for level1
+ 
+    la a1,rvtest_data                                                      # loads the address of label rvtest_data
+    mv a0, a1                                                              # set the VA to PA (identity mapping)
+    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_R )      # sets the permission bits --No dirty bit
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
-#--------------------------------------------------Save area code-------------------------------------------------------------
-	/* Save Virtual addresses in of Code and Data 
-	in their respective S-mode save area */
+    la a1,rvtest_check                                                     # loads the address of label rvtest_check
+    mv a0, a1                                                              # set the VA to PA (identity mapping)                                          
+    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_W | PTE_R | PTE_V )      # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
-	/****** code ******/
-	LI (t0, va)
-	LI (t1, pa)
-	sub t0, t0, t1 // (VA-PA) Note: VA > PA 
-	csrr sp, mscratch
-	add t1,sp,t0
-	csrw sscratch, t1 
-	
-	LREG t1, code_bgn_off+0*sv_area_sz(sp)
-	add t2, t1, t0
-	SREG t2, code_bgn_off+1*sv_area_sz(sp)
+# ----------------Set the SATP and change the mode----------------------
 
-	/******* data *******/
-	// update save area
-	LREG t1, data_bgn_off+0*sv_area_sz(sp)
-	add  t2, t1,t0
-	SREG t2, data_bgn_off+1*sv_area_sz(sp)
-	//signature
-	LREG t1, sig_bgn_off+0*sv_area_sz(sp)
-	add t2, t1, t0
-	SREG t2, sig_bgn_off+1*sv_area_sz(sp) 
+    SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
+    la a1,vm_en                                                            # loads the address of vm_en
+    #ifdef smode																													 
+        CHANGE_T0_S_MODE(a1)                                        	   # changes mode M to S and set the MEPC value to a1
+    #else
+        CHANGE_T0_U_MODE(a1)                                        	   # changes mode M to U and set the MEPC value to a1
+    #endif
 
-	sfence.vma
-#-----------------------------------------------------------------------------------------------------------------------------
+# ----------------Virtualization Enabeled-------------------------------
 
-	RVTEST_GOTO_LOWER_MODE	Smode		                   # Switching to S mode
-
-#-----------------------------------------------------------------------------------------------------------------------------
 vm_en:
-	LA (t0, 0x91000000)                                    #Virtual address of rvtest_data
-	sw x2, 0(t0)                                           #write at base address of rvtest_data
 
-	RVTEST_GOTO_MMODE		                               # Switching back to M mode
-	LI (a4, 0x123)
-	RVTEST_SIGUPD(x13,a4)
-#endif
+    li t1,10                                                               
 
-#-----------------------------------------------------------------------------------------------------------------------------
-RVTEST_CODE_END
-RVMODEL_HALT
-RVTEST_DATA_BEGIN
-.align 24
-#-------------------------------------------------rvtest_data section---------------------------------------------------------
-rvtest_data:
-.word 0xbeefcafe
-.word 0xbabecafe
-.word 0xbabecafe
-.word 0xbabecafe
-#-----------------------------------------------------------------------------------------------------------------------------
-#ifdef rvtest_strap_routine
-.align 12
-rvtest_slvl1_pg_tbl:
-		RVTEST_PTE_IDENT_MAP
-#endif
-RVTEST_DATA_END
-RVMODEL_DATA_BEGIN
-rvtest_sig_begin:
-sig_begin_canary:
-CANARY;
+pre_store:
 
-// test signatures initialization
-signature_x13_1:
-    .fill 32*(XLEN/32),4,0xcafebeef
+    TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                         # load the addr and expected cause 
+    la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
-// trap signatures initialization
-#ifdef rvtest_mtrap_routine
-mtrap_sigptr:
-    .fill 32*(XLEN/32),4,0xdeadbeef
-#endif
+check_store:
+    sw t1,0(a1)                                                             # test the store access
+	j exit
+	
+trap_handler:
 
-sig_end_canary:
-CANARY;
-rvtest_sig_end:
-RVMODEL_DATA_END
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=
+    csrr t0, mcause                                                         # read the value of mcause 
+    la t1, rvtest_check                                                     # load the address of trvtest_check
+    
+    lw t2, 0(t1)                                                            # if cause expected then load 1 else 0
+    lw t3, 4(t1)                                                            # load the expected value of mepc 
+    lw t4, 8(t1)                                                            # load the expected value of mcause  
+
+    li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
+    beq t0,t1,next_instr                                                    # checks if ecall is occured
+
+    li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
+    beq t0,t1,next_instr                                                    # checks for ecall is occured
+
+    beqz t2, exit                                                           # Jumps to exit if cause is not expected
+ 
+    csrr t5,mepc                                                            # read the value of mepc 
+    bne t3,t5,exit                                                          # check the value of mepc with it's expected value
+
+    bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+
+    li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
+    beq t0,t5,next_instr                                                    # if fetch page fault jump to next instr in M mode
+
+
+continue_execution:
+
+    INCREMENT_MEPC  _SUMODE_                                                # update the value of mepc 
+    mret                                                                    # return 
+
+next_instr:
+
+    INCREMENT_MEPC  _MMODE_                                                 # update the value of mepc 
+    li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
+    csrs mstatus,t1                                                         # update the value mstatus MPP 
+    mret                                                                    # return 
+
+
+RVTEST_EXIT_LOGIC                                                           # Exit logic 
+
+.data  
+.align 24                                                                   # Superpage align  
+    rvtest_check: 
+      .word 0xdeadbeef                                                      # 1 for cause expected 0  for no cause 
+      .word 0xbeefdead                                                      # write the value of mepc here (where  cause is expected)
+      .word 0xcafecafe                                                      # write the value of expect cause 
+.align 22                                     
+    rvtest_data:   
+      .word 0xbeefcafe                                                 
+      .word 0xdeadcafe                                                 
+      .word 0x00000000                                                 
+      .word 0x00000000 
+.align 12                                                      
+    pgtb_l1:                                                       
+        .zero 4096                                                 
+    pgtb_l0:                                                       
+        .zero 4096                                                                                                     
+
+.align 4; .global tohost;   tohost:   .dword 0;
+.align 4; .global fromhost; fromhost: .dword 0;
