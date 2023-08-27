@@ -8,8 +8,6 @@
 # covers the following scenarios in both supervisor and user privilege
 # modes for level1 PTE.
 #
-#  Set PTE.R = 0 and PTE.W = 1 and PTE.X = 0 test the RWX access in SMode
-#  Set PTE.R = 0 and PTE.W = 1 and PTE.X = 0 test the RWX access in UMode
 #
 #=======================================================================
 
