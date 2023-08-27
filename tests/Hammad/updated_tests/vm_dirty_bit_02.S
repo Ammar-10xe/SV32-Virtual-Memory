@@ -118,7 +118,6 @@ next_instr:
     csrs mstatus,t1                                                         # update the value mstatus MPP 
     mret                                                                    # return 
 
-
 RVTEST_EXIT_LOGIC                                                           # Exit logic 
 
 .data  
