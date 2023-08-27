@@ -6,7 +6,7 @@
 # If mstatus.TVM=1, read and write access to the satp and sfence.vma will 
 # raise illegal instruction exception in S-mode. This test
 # covers the following scenarios in both supervisor and user privilege
-# modes for level1 PTE.
+# modes for level0 PTE.
 #
 #
 #=======================================================================
