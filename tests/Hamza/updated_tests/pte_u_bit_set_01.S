@@ -31,7 +31,7 @@ _start:
 
     la a1,vm_en                                                            # loads the address of label vm_en
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_V )                  # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V | PTE_U )                  # sets the permission bits
     PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l1, LEVEL1 )                     # setup the PTE for level1
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
@@ -41,7 +41,7 @@ _start:
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)                                          
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V )          # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V | PTE_U )          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode----------------------
@@ -60,25 +60,16 @@ check_load:
     lw t1,0(a1)                                                            # tests the load access 
     nop
 
-pre_store:
-
-    TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                        # load the addr and expected cause 
-    la a1,rvtest_data                                                      # loads the address of label rvtest_data
-
 check_store:
     sw t1,0(a1)                                                            # test the store access
     nop                          
-    SMODE_ECALL                                                            # ecall to go to m mode
-
-pre_execute:
-
-    TEST_PROLOG(check_execute,CAUSE_FETCH_PAGE_FAULT)                      # load the addr and expected cause 
+    SMODE_ECALL                                                            # ecall to go to m mode 
 
 # -------------LEVEL 1 PTE Setup for execute test------------------------
                                                                            # Setup a new PTE to test execute
     la a1,check_execute                                                    # loads the address of label vm_en
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_X )                          # sets the permission bits
+    ori a2, x0, (PTE_D | PTE_A | PTE_X | PTE_R | PTE_V | PTE_U )           # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------

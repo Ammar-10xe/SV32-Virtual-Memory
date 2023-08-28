@@ -1,10 +1,3 @@
-#=======================================================================
-#   🌟 U Bit Permission set for Level1 PTE 🌟
-#-----------------------------------------------------------------------
-# Test Description:
-#
-# If PTE belongs to user mode i.e. its U permission bit is set (pte.u = 1),
-# then accessing that PTE in user mode should be successful if the
 # (r,w,x) permission of PTE is granted.
 # When satp.mode=sv32 and PTE has (r,w,x) PMP permissions, this test
 # covers the following scenarios in user privilege modes for level1 PTE.
@@ -16,6 +9,88 @@
 #=======================================================================
 
 #include "../../../macros1.h"
+#define _MMODE_  "M"
+#define _SUMODE_ "SU"
+
+.text
+.global _start
+
+_start:
+    ALL_MEM_PMP                                                            # PMP permission to all the memory
+    la t1,trap_handler                                                     # loads the address of trap handler 
+    csrw mtvec,t1                                                          # sets the mtvec to trap handler 
+    
+# ----------------LEVEL 1 PTE Setup for load and store test------------
+
+    la a1,vm_en                                                            # loads the address of label vm_en
+    mv a0, a1                                                              # set the VA to PA (identity mapping)
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_V )                  # sets the permission bits
+    PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l1, LEVEL1 )                     # setup the PTE for level1
+ 
+    la a1,rvtest_data                                                      # loads the address of label rvtest_data
+    mv a0, a1                                                              # set the VA to PA (identity mapping)
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_U | PTE_V )                  # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
+
+    la a1,rvtest_check                                                     # loads the address of label rvtest_data
+    mv a0, a1                                                              # set the VA to PA (identity mapping)                                          
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V )          # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
+
+# ----------------Set the SATP and change the mode----------------------
+
+    SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
+    la a1,vm_en                                                            # loads the address of vm_en
+    CHANGE_T0_U_MODE(a1)                                        	   # changes mode M to U and set the MEPC value to a1
+
+# ----------------Virtualization Enabeled-------------------------------
+
+vm_en:
+
+    li t1,10                                                               
+    
+pre_load:
+
+    TEST_PROLOG(check_load,CAUSE_LOAD_PAGE_FAULT)                          # load the addr and expected cause 
+    la a1, rvtest_data                                                     # loads the address of label rvtest_data
+
+check_load:
+
+    lw t1,0(a1)                                                            # tests the load access 
+    nop
+
+pre_store:
+
+    TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                        # load the addr and expected cause 
+    la a1,rvtest_data                                                      # loads the address of label rvtest_data
+
+check_store:
+    sw t1,0(a1)                                                            # test the store access
+    nop                          
+    SMODE_ECALL                                                            # ecall to go to m mode
+
+pre_execute:
+
+    TEST_PROLOG(check_execute,CAUSE_FETCH_PAGE_FAULT)                      # load the addr and expected cause 
+
+# -------------LEVEL 1 PTE Setup for execute test------------------------
+                                                                        # Setup a new PTE to test execute
+    la a1,check_execute                                                    # loads the address of label vm_en
+    mv a0, a1                                                              # set the VA to PA (identity mapping)
+    ori a2, x0, (PTE_D | PTE_A | PTE_R | PTE_V | PTE_U )                   # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
+
+# ----------------Set the SATP and change the mode---------------------
+
+    SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
+    la a1,check_execute                                                    # loads the address of check_execute
+    CHANGE_T0_U_MODE(a1)                                                 # changes mode M to U and set the MEPC
+
+
+check_execute:
+   
+    li t1, 0x45                                                            # page fault should raise 
+    j exit
 
 trap_handler:
 
@@ -39,142 +114,37 @@ trap_handler:
 
     bne  t0, t4, exit                                                      # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
-    li t5, CAUSE_FETCH_ACCESS                                              # load the value of fetch access fault
-    beq t0, t5, next_instr                                                 # if fetch access fault jump to next instr in M mode  
-
     li t5, CAUSE_FETCH_PAGE_FAULT                                          # load the value of fetch page fault exception 
     beq t0,t5,next_instr                                                   # if fetch page fault jump to next instr in M mode
 
 
 continue_execution:
 
-    INCREMENT_MEPC                                                         # update the value of mepc 
-    mret
+    INCREMENT_MEPC  _SUMODE_                                               # update the value of mepc 
+    mret                                                                   # return 
 
 next_instr:
 
-    INCREMENT_MEPC                                                         # update the value of mepc 
+    INCREMENT_MEPC  _MMODE_                                                # update the value of mepc 
     li t1,MSTATUS_MPP                                                      # update the MPP to MSTATUS_MPP for M mode
     csrs mstatus,t1                                                        # update the value mstatus MPP 
-    mret
-
-.text
-.global _start
-
-_start:
-    ALL_MEM_PMP                                                            # PMP permission to all the mem
-    la t1,trap_handler                                                     # loads the address of trap handler 
-    csrw mtvec,t1                                                          # sets the mtvec to trap handler 
-    
-PTE_LEVEL1_USER:
-
-# ----------------LEVEL 1 PTE Setup for load and store test------------
-
-    la a1,vm_en                                                             # loads the address of label vm_en
-    mv a0, a1                                                               # generrates the VA for label vm_en
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
- 
-    la a1,rvtest_data                                                       # loads the address of label rvtest_data
-    mv a0, a1                                                               # generrates the VA for label rvtest_data
-    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_X | PTE_U )           # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1   
-
-    la a1,rvtest_check                                                      # loads the address of label rvtest_data
-    mv a0, a1                                                               # generrates the VA for label rvtest_data                                          
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V)    # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
-
-# ----------------Set the SATP and change the mode---------------------
+    mret                                                                   # return 
 
 
-    SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
-    la a1,vm_en                                                             # loads the address of vm_en 
-    CHANGE_T0_U_MODE(a1)                                                    # changes mode M to S and set the MEPC value to a1
-
-# ----------------Virtualization Enabeled------------------------------
-
-vm_en:
-
-    li t1,10
-    
-pre_load:
-
-    la t1, rvtest_check
-    la t2, check_load
-    li t3, CAUSE_LOAD_PAGE_FAULT
-    li t4, 1    
-    sw t4, 0(t1)                                                            # store 1 to indicate cause is expected   
-    sw t2, 4(t1)                                                            # store the address where cause is expected 
-    sw t3, 8(t1)                                                            # store the mcause value of expected cause
-    la a1, rvtest_data                                                      # loads the address of label rvtest_data
-
-check_load:
-
-    lw t1,0(a1)  
-    nop
-
-pre_store:
-
-    la t1, rvtest_check
-    la t2, check_store
-    li t3, CAUSE_STORE_PAGE_FAULT
-    li t4, 1    
-    sw t4, 0(t1)                                                            # store 1 to indicate cause is expected   
-    sw t2, 4(t1)                                                            # store the address where cause is expected 
-    sw t3, 8(t1)                                                            # store the mcause value of expected cause
-    la a1,rvtest_data                                                       # loads the address of label rvtest_data
-
-check_store:
-    sw t1,0(a1)
-    nop                          
-    ecall
-
-pre_execute:
-
-    la t1, rvtest_check
-    la t2, check_execute
-    li t3, CAUSE_FETCH_PAGE_FAULT
-    li t4, 1    
-    sw t4, 0(t1)                                                            # store 1 to indicate cause is expected   
-    sw t2, 4(t1)                                                            # store the address where cause is expected 
-    sw t3, 8(t1)                                                            # store the mcause value of expected cause
-
-PTE_LEVEL1_USER_EXECUTE:
-
-# -------------LEVEL 1 PTE Setup for execute test----------------------
-                                                                            # Setup a new PTE to test execute 
-    la a1,check_execute                                                     # loads the address of label vm_en
-    mv a0, a1 
-    ori a2, x0, ( PTE_D | PTE_A | PTE_V  | PTE_W | PTE_R | PTE_U )           # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, LEVEL1)                                  # setup the PTE for level1
-
-# ----------------Set the SATP and change the mode---------------------
-
-    SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
-    la a1,check_execute                                                     # loads the address of check_execute
-    CHANGE_T0_U_MODE(a1)                                                    # changes mode M to S and set the MEPC 
-
-
-check_execute:
-    li t1, 0x45                                                             # page fault should raise 
-    nop 
-
-RVTEST_EXIT_LOGIC                                                           # Exit logic 
+RVTEST_EXIT_LOGIC                                                          # Exit logic 
 
 .data  
-.align 24
+.align 24                                                                  # Superpage align  
     rvtest_check: 
-
-        .word 0xdeadbeef                                                    # 1 for cause expected 0  for no cause 
-        .word 0xbeefdead                                                    # write the value of mepc here (where  cause is expected)
-        .word 0xcafecafe                                                    # write the value of expect cause 
+      .word 0xdeadbeef                                                     # 1 for cause expected 0  for no cause 
+      .word 0xbeefdead                                                     # write the value of mepc here (where  cause is expected)
+      .word 0xcafecafe                                                     # write the value of expect cause 
 .align 22                                     
     rvtest_data:   
-        .word 0xbeefcafe                                                 
-        .word 0xdeadcafe                                                 
-        .word 0x00000000                                                 
-        .word 0x00000000 
+      .word 0xbeefcafe                                                 
+      .word 0xdeadcafe                                                 
+      .word 0x00000000                                                 
+      .word 0x00000000 
 .align 12                                                      
     pgtb_l1:                                                       
         .zero 4096                                                 
