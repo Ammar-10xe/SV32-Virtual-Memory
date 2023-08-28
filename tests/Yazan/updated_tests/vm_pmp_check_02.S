@@ -1,31 +1,15 @@
-#################################################################################################   
-# Verification Goal:   Remove X PMP Permission of code section, and R and W Permission of data  #
-#                      section For Level 0 PTE. For execute, read and write access, fetch,      #
-#                      load and store/amo access fault should raise respectively                #
-#                                                                                               # 
-# Feature Discription: If PTE has valid and non-reserved RWX permissions, but the translated    #
-#                      Physical address (pte.ppn of leaf PTE + offset) does not have (r,w,x)    #
-#                      PMP permissions, then accessing the translated Physical address would    #
-#                      raise access fault exception.                                            #
-#################################################################################################   
+###################################################################################################
+# Verification Goal:   Remove X PMP permission of the code section and R/W permission of the data #
+#                      section for Level 0 PTE. For execute, read, and write access, fetch,       #
+#                      load, and store/amo access faults should be raised, respectively.          #
+#                                                                                                 #
+# Feature Description: If a PTE has valid and non-reserved RWX permissions, but the translated    #
+#                      physical address (pte.ppn of the leaf PTE + offset) does not have (r,w,x)  #
+#                      PMP permissions, accessing the translated physical address will raise an   #
+#                      access fault exception.                                                    #
+###################################################################################################
 
-#===============================================================================
-#   🌟 PMP permissions on Physical Address at Level0 PTE 🌟
-#-------------------------------------------------------------------------------
-# Test Description:
-#
-# If PTE has valid and non-reserved RWX permissions, but the translated 
-# Physical address (pte.ppn of leaf PTE + offset) does not have (r,w,x) 
-# PMP permissions, then accessing the translated Physical address would 
-# raise access fault exception. 
-#
-# 💫 Set PMP.X = 0 and test the execute access
-# 💫 Set PMP.R = 0 and test the read access
-# 💫 Set PMP.W = 0 and test the write access
-#
-#================================================================================
-
-#include "../../../macros1.h"
+#include "macros.h"
 
 
 #define NAPOT_RANGE_4KB 0x1FF                                           # Set 4kB range with NAPOT
@@ -42,6 +26,7 @@
 
 .text
 .global _start
+.option norvc
 
 _start:
 
@@ -143,7 +128,11 @@ pre_store:
 check_store:                                                            # test the store access
     sw t1,0(a1)
     nop                          
-    ecall
+    #ifdef smode
+        SMODE_ECALL                                                     # SMODE ecall 
+    #else
+        UMODE_ECALL                                                     # UMODE ecall 
+    #endif
 
 pre_execute:
 
@@ -166,7 +155,6 @@ pre_execute:
 
 check_execute:                                                          # test the execute access
     li t1, 0x45                                                         # page fault should raise 
-    ecall
     j exit
 
 trap_handler:
