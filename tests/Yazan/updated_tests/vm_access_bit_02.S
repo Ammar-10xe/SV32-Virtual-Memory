@@ -1,12 +1,18 @@
-##################################################################################################
-# Verification Goal:   Set PTE.A = 0 and check execute, read, and write access in supervisor and #
-#                      user mode at level 0 PTE. Fetch, load, and store/amo page faults should   #
-#                      raise respectively.                                                       #
-#                                                                                                #
-# Feature Description: If the implementation does not set the PTE.A on accessing the PTE, and    #
-#                      the PTE has PTE.A=0, then accessing it would raise a page fault           #
-#                      exception of the corresponding access type.                               #
-################################################################################################## 
+#=======================================================================
+#  RWX Access of Level0 PTE in User and Supervisor mode when access
+#  bit is low 
+#-----------------------------------------------------------------------
+# Test Description:
+#
+# If implementation does not sets the pte.A on accessing the PTE, 
+# and PTE has pte.A=0, then accessing it would raise page fault 
+# exception of the corresponding access type. 
+#
+# - Set pte.r=1 & pte.a=0 and test the read acces. 
+# - Set pte.w=1 & pte.a=0 and test the write access.
+# - Set pte.x=1 & pte.a=0 and test the execute access.
+#
+#=======================================================================
 
 #include "macros.h"
 

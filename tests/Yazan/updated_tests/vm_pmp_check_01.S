@@ -1,13 +1,22 @@
-###################################################################################################
-# Verification Goal:   Remove X PMP permission of the code section and R/W permission of the data #
-#                      section for Level 1 PTE. For execute, read, and write access, fetch,       #
-#                      load, and store/amo access faults should be raised, respectively.          #
-#                                                                                                 #
-# Feature Description: If a PTE has valid and non-reserved RWX permissions, but the translated    #
-#                      physical address (pte.ppn of the leaf PTE + offset) does not have (r,w,x)  #
-#                      PMP permissions, accessing the translated physical address will raise an   #
-#                      access fault exception.                                                    #
-###################################################################################################
+#=======================================================================
+#  PMP permissions on Physical Address in User and supervisor mode
+#  at level 1 PTE
+#-----------------------------------------------------------------------
+# Test Description:
+#
+# If PTE has valid and non-reserved RWX permissions, but the translated
+# Physical address (pte.ppn of leaf PTE + offset) does not have (r,w,x)
+# PMP permissions, then accessing the translated Physical address would
+# raise access fault exception.
+#
+# - Remove read PMP permission of translated Physical Address in pmpcfg
+#   and test the read acces.
+# - Remvoe write PMP permission of translated Physical Address in pmpcfg
+#   and test the write access.
+# - Remove execute PMP permission of translated Physical Address in 
+#   pmpcfg and test the execute access.
+#
+#=======================================================================
 
 #include "macros.h"
 

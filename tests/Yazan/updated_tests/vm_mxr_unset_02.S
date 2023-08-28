@@ -1,11 +1,16 @@
-#################################################################################################
-# Verification Goal:   Set mstatus.MXR = 0 and check the load access on the valid PTE with      #
-#                      only PTE.X = 1 should raise a load page fault in supervisor/user mode.   #
-#                      The PTE is at level 0.                                                   #
-#                                                                                               # 
-# Feature Description: If the PTE has only execute permission (pte.x = 1) and s/mstatus.MXR=0,  #
-#                      then read access on that PTE should raise a load page fault exception.   #
-#################################################################################################
+#=======================================================================
+#  Load Access of Level1 PTE in User and Supervisor mode when 
+#  mstatus.MXR is unset 
+#-----------------------------------------------------------------------
+# Test Description:
+#
+# If PTE has only execute permission (pte.x = 1) and s/mstatus.MXR=0, 
+# then read access on that PTE should raise load page fault exception.
+#
+# - Set pte.r=0 & pte.w=0 & pte.x=1 & s/mstatus.MXR=0 and test the 
+#   read acces.
+#
+#=======================================================================
 
 #include "macros.h"
 

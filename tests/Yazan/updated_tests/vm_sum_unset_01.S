@@ -1,12 +1,18 @@
-##################################################################################################
-# Verification Goal:   Set mstatus.SUM = 0, check execute, read, and write access on U-mode      #
-#                      page PTE at level 1 in supervisor mode. Should raise fetch, load, and     #
-#                      store/amo page faults, respectively.                                      #
-#                                                                                                #
-# Feature Description: If a PTE belongs to user mode, i.e., its U permission bit is set          #
-#                      (pte.u = 1), and m/sstatus.SUM = 0, accessing that PTE in supervisor      #
-#                      mode would raise a page fault exception of the corresponding access type. #
-##################################################################################################
+#=======================================================================
+#  RWX Access of Level1 PTE in Supervisor mode when mstatus.SUM unset
+#-----------------------------------------------------------------------
+# Test Description:
+#
+# If PTE belongs to user mode i.e. its U permission bit is set 
+# (pte.u = 1) and m/sstatus.SUM = 0, then accessing that PTE in 
+# supervisor mode would raise page fault exception of the 
+# corresponding access type. 
+#
+# - Set pte.u=1 & s/mstatus.SUM = 0 and test the read acces.
+# - Set pte.u=1 & s/mstatus.SUM = 0 and test the write access.
+# - Set pte.u=1 & s/mstatus.SUM = 0 and test the execute access.
+#
+#=======================================================================
 
 #include "macros.h"
 
