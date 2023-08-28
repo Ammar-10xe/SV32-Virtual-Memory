@@ -1,26 +1,13 @@
-#################################################################################################   
+#################################################################################################
 # Verification Goal:   Set mstatus.MXR = 0 and check the load access on the valid PTE with      #
-#                      only PTE.X = 1 should raise load page fault in supervisor/user mode.     #
-#                      PTE is at level 0                                                        #
+#                      only PTE.X = 1 should raise a load page fault in supervisor/user mode.   #
+#                      The PTE is at level 0.                                                   #
 #                                                                                               # 
-# Feature Discription: If PTE has only execute permission (pte.x = 1) and s/mstatus.MXR=0,      #
-#                      then read access on that PTE should raise load page fault exception.     #
+# Feature Description: If the PTE has only execute permission (pte.x = 1) and s/mstatus.MXR=0,  #
+#                      then read access on that PTE should raise a load page fault exception.   #
 #################################################################################################
 
-
-#===============================================================================
-#   🌟 Make Executable Page Readable with s/mstatus.MXR unset at Level0 PTE 🌟
-#-------------------------------------------------------------------------------
-# Test Description:
-#
-# If PTE has only execute permission (pte.x = 1) and s/mstatus.MXR=0,
-# then read access on that PTE should raise load page fault exception.
-#
-# 💫 Set only the PTE.X = 1 and mstatus.MXR = 0 and test the read access
-#
-#================================================================================
-
-#include "../../../macros1.h"
+#include "macros.h"
 
 #define _MMODE_ "M"
 #define _SUMODE_ "SU"
@@ -33,6 +20,7 @@
     
 .text
 .global _start
+.option norvc
 
 _start:
     ALL_MEM_PMP                                                         # PMP permission to all the mem
@@ -90,7 +78,11 @@ check_load:                                                             # test t
 
     lw t1,0(a1)  
     nop
-    ecall
+    #ifdef smode
+        SMODE_ECALL                                                     # SMODE ecall 
+    #else
+        UMODE_ECALL                                                     # UMODE ecall 
+    #endif
     j exit
 
 trap_handler:

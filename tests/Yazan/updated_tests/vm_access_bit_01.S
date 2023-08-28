@@ -1,30 +1,14 @@
-#################################################################################################   
-# Verification Goal:   Set PTE.A = 0 and check execute, read and write access in supervisor     #
-#                      and user mode at level 1 PTE. Fetch, load and store/amo page fault       #
-#                      should raise respectively.                                               #
-#                                                                                               # 
-# Feature Discription: If implementation does not sets the pte.A on accessing the PTE, and PTE  #
-#                      has pte.A=0, then accessing it would raise page fault exception of the   #
-#                      corresponding access type.                                               #
-################################################################################################# 
+##################################################################################################
+# Verification Goal:   Set PTE.A = 0 and check execute, read, and write access in supervisor and #
+#                      user mode at level 1 PTE. Fetch, load, and store/amo page faults should   #
+#                      raise respectively.                                                       #
+#                                                                                                #
+# Feature Description: If the implementation does not set the PTE.A on accessing the PTE, and    #
+#                      the PTE has PTE.A=0, then accessing it would raise a page fault           #
+#                      exception of the corresponding access type.                               #
+################################################################################################## 
 
-#=======================================================================
-#   🌟 Access Bit Implementation of Level1 PTE 🌟
-#-----------------------------------------------------------------------
-# Test Description:
-#
-# If implementation does not sets the pte.A on accessing the PTE, and PTE
-# has pte.A=0, then accessing it would raise page fault exception of the
-# corresponding access type.  
-#
-# 💫 Set PTE.A = 0 and test the read access.
-# 💫 Set PTE.A = 0 and test the write access.
-# 💫 Set PTE.A = 0 and test the execute access.
-#
-#=======================================================================
-
-
-#include "../../../macros1.h"
+#include "macros.h"
 
 #define _MMODE_ "M"
 #define _SUMODE_ "SU"
@@ -37,7 +21,7 @@
 
 .text
 .global _start
-
+.option norvc
 _start:
     ALL_MEM_PMP                                                         # PMP permission to all the mem
     la t1,trap_handler                                                  # loads the address of trap handler 
@@ -94,7 +78,11 @@ pre_store:
 check_store:                                                            # test the store access
     sw t1,0(a1)
     nop                          
-    ecall
+    #ifdef smode
+        SMODE_ECALL                                                     # SMODE ecall 
+    #else
+        UMODE_ECALL                                                     # UMODE ecall 
+    #endif
 
 pre_execute:
 
@@ -122,7 +110,6 @@ PTE_LEVEL1_SUPERVISOR_EXECUTE:
 
 check_execute:                                                          # test the execute access
     li t1, 0x45                                                         # page fault should raise 
-    ecall
     j exit
 
 trap_handler:
