@@ -88,9 +88,8 @@ exit:                                                              ;\
     csrr t1, mepc                                                  ;\
     lw t5, 0(t1)                                                   ;\
     li t2, 3                                                       ;\
-    and t2, t2, t5                                                 ;\
-    li t3, 3                                                       ;\
-    bne t2, t3, not_32_bit_Instr_\label_suffix                     ;\
+    and t5, t5, t2                                                 ;\
+    bne t2, t5, not_32_bit_Instr_\label_suffix                     ;\
     addi t1, t1, 4                                                 ;\
     j write_mepc_\label_suffix                                     ;\
     not_32_bit_Instr_\label_suffix:                                ;\
