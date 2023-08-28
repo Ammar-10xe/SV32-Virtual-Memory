@@ -1,6 +1,6 @@
 #=======================================================================
-#   🌟 RWX Access of Level1 PTE in User and Supervisor mode when valid
-#      bit is low  🌟
+#  RWX Access of Level1 PTE in User and Supervisor mode when valid
+#  bit is low 
 #-----------------------------------------------------------------------
 # Test Description:
 #
@@ -10,9 +10,9 @@
 # covers the following scenarios in both supervisor and user privilege
 # modes for level1 PTE.
 #
-# 💫 Set PTE.V = 0 and test the read access.
-# 💫 Set PTE.V = 0 and test the write access.
-# 💫 Set PTE.V = 0 and test the execute access.
+# - Set PTE.V = 0 and test the read access.
+# - Set PTE.V = 0 and test the execute access.
+# - Set PTE.V = 0 and test the write access.
 #
 #=======================================================================
 
