@@ -28,6 +28,8 @@ _start:
     ALL_MEM_PMP                                                            # PMP permission to all the memory
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
+    la a1, rvtest_data                                                     # loads the address of label rvtest_data
+    sw t1,0(a1)
     
 # ----------------LEVEL 1 PTE Setup for load and store test------------
 
@@ -63,12 +65,8 @@ _start:
 vm_en:
 
     li t1,10                                                               
-    la a1, rvtest_data                                                      # loads the address of label rvtest_data
-    sw t1,0(a1)
-    
-pre_load:
 
-    TEST_PROLOG(check_load,CAUSE_LOAD_PAGE_FAULT)                           # load the addr and expected cause 
+pre_load:
     la a1, rvtest_data                                                      # loads the address of label rvtest_data
 
 check_load:
