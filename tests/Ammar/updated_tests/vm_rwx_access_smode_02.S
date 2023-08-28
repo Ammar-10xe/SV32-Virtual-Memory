@@ -1,5 +1,5 @@
 #=======================================================================
-# RWX access on S-mode pages in S-mode for level1 PTE when pte.r=1, 
+# RWX access on S-mode pages in S-mode for level0 PTE when pte.r=1, 
 # pte.w=1, pte.x=1 
 #-----------------------------------------------------------------------
 # Test Description:
@@ -14,7 +14,7 @@
 # following in supervisor privilege mode for level 0 and level 1 PTE.
 # 
 # - Test the read access for pte.r=1 
-# - Test the write access for pte.w=1
+# - Test the write access for pte.w=1 
 # - Test the execute access for pte.x=1 
 # 
 #=======================================================================
@@ -33,15 +33,20 @@ _start:
     
 # --------LEVEL 1 PTE Setup for load and store and execute access-------
 
+    la a1,pgtb_l0                                                          # loads the address of label vm_en
+    mv a0, a1                                                              # set the VA to PA (identity mapping)
+    ori a2, x0, ( PTE_V )                                                  # sets the permission bits
+    PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l1, LEVEL1 )                     # setup the PTE for level1
+
     la a1,vm_en                                                            # loads the address of label vm_en
     mv a0, a1                                                              # set the VA to PA (identity mapping)
     ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_V )                          # sets the permission bits
-    PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l1, LEVEL1 )                     # setup the PTE for level1
+    PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l0, LEVEL0 )                     # setup the PTE for level1
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
     ori a2, x0,( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V)            # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level1   
 
 # ----------------Set the SATP and change the mode----------------------
 
@@ -102,17 +107,16 @@ next_instr:
     INCREMENT_MEPC   _MMODE_                                                # update the value of mepc
     li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
     csrs mstatus,t1                                                         # update the value mstatus MPP
-    mret
+    mret                                                                    # return 
 
 RVTEST_EXIT_LOGIC                                                           # Exit logic 
 
-.data  
-.align 24                                                                   # Superpage align  
+.data                                                                      
     rvtest_check: 
       .word 0xdeadbeef                                                      # 1 for cause expected 0  for no cause 
       .word 0xbeefdead                                                      # write the value of mepc here (where  cause is expected)
       .word 0xcafecafe                                                      # write the value of expect cause 
-.align 22                                     
+.align 12                                     
     rvtest_data:   
       .word 0xbeefcafe                                                 
       .word 0xdeadcafe                                                 
