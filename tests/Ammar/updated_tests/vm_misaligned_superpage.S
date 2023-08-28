@@ -1,18 +1,17 @@
 #=======================================================================
-#   🌟 RWX Access of Level0 PTE in User and Supervisor mode when valid
-#      bit is low  🌟
+#  Misaligned Superpage for level 1 PTE for supevisor and user mode
 #-----------------------------------------------------------------------
 # Test Description:
 #
-# If PTE does not have the Valid (pte.V=0) permission, accessing it
-# would raise a page fault exception of the corresponding access type.
-# When satp.mode=sv32 and PTE has (r,w,x) PMP permissions, this test
-# covers the following scenarios in both supervisor and user privilege
-# modes for level1 PTE.
-#
-# 💫 Set PTE.V = 0 and test the read access.
-# 💫 Set PTE.V = 0 and test the write access.
-# 💫 Set PTE.V = 0 and test the execute access.
+# If PTE at level1 is leaf PTE (superpage) and its pte.ppn[0]!=0, then
+# it is a misaligned superpage and accessing that PTE would raise page
+# fault exception of the corresponding access type.
+# 
+# When satp.mode=sv32, PTE has (r,w,x) PMP permissions, PTE has 
+# non-reserved RWX encodings, (pte.r | pte.x)=1, and pte.v=1, then test
+# the following in supervisor and user privilege mode for level1 PTE.
+# 
+# - set pte.ppn[0]!=0 and test for read, write and execute access.
 #
 #=======================================================================
 
@@ -35,29 +34,24 @@ _start:
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
 
-# ----------------LEVEL1 PTE Setup to point to LEVEL0 PTE----------------
-    la a1,pgtb_l0                                                          # loads the address of label vm_en
-    mv a0, a1                                                              # generrates the VA for label vm_en
-    ori a2, x0, ( PTE_V )                                                  # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
+# ----------------LEVEL 1 PTE Setup for load and store test------------
 
-# ----------------LEVEL 0 PTE Setup for load and store test--------------
     la a1,vm_en                                                            # loads the address of label vm_en
     mv a0, a1                                                              # set the VA to PA (identity mapping)
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V )              # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
+    PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l1, LEVEL1 )                     # setup the PTE for level1
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_R )      # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
+    ori a2, x0,( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_R| PTE_V) # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)                                          
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_W | PTE_R | PTE_V )      # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
-# ----------------Set the SATP and change the mode-----------------------
+# ----------------Set the SATP and change the mode----------------------
 
     SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
     la a1,vm_en                                                            # loads the address of vm_en
@@ -90,14 +84,12 @@ pre_store:
 
 check_store:
     sw t1,0(a1)                                                             # test the store access
-    nop  
-
+    nop                                                                                                 
     #ifdef smode
       SMODE_ECALL                                                           # changes mode M to S and set the MEPC
     #else
      UMODE_ECALL                                                            # changes mode M to U and set the MEPC
     #endif
-
 
 pre_execute:
 
@@ -106,9 +98,9 @@ pre_execute:
 # -------------LEVEL 1 PTE Setup for execute test------------------------
                                                                             # Setup a new PTE to test execute
     la a1,check_execute                                                     # loads the address of label vm_en
-    mv a0, a1                                                               # VA = PA - Identity Map
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X )                       # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level0
+    mv a0, a1                                                               # set the VA to PA (identity mapping)
+    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V)                # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
 
@@ -120,10 +112,15 @@ pre_execute:
       CHANGE_T0_U_MODE(a1)                                                  # changes mode M to U and set the MEPC
     #endif
 
-
+.align 12                                                                   # to make the address misliagned to test execute access
 check_execute:
-   
+
     li t1, 0x45                                                             # page fault should raise 
+    #ifdef smode
+      SMODE_ECALL                                                           # changes mode M to S and set the MEPC
+    #else
+     UMODE_ECALL                                                            # changes mode M to U and set the MEPC
+    #endif
     j exit
 
 trap_handler:
@@ -154,12 +151,12 @@ trap_handler:
 
 continue_execution:
 
-    INCREMENT_MEPC    _SUMODE_                                              # update the value of mepc 
+    INCREMENT_MEPC  _SUMODE_                                                # update the value of mepc 
     mret                                                                    # return 
 
 next_instr:
 
-    INCREMENT_MEPC    _MMODE_                                               # update the value of mepc 
+    INCREMENT_MEPC  _MMODE_                                                 # update the value of mepc 
     li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
     csrs mstatus,t1                                                         # update the value mstatus MPP 
     mret                                                                    # return 
@@ -168,17 +165,19 @@ next_instr:
 RVTEST_EXIT_LOGIC                                                           # Exit logic 
 
 .data  
-.align                                                                     
+.align 24                                                                   # Superpage align  
     rvtest_check: 
-      .word 0xdeadbeef                                                      # 1 for cause expected 0  for no cause 
-      .word 0xbeefdead                                                      # write the value of mepc here (where  cause is expected)
-      .word 0xcafecafe                                                      # write the value of expect cause 
+    .word 0xdeadbeef                                                        # 1 for cause expected 0  for no cause 
+    .word 0xbeefdead                                                        # write the value of mepc here (where  cause is expected)
+    .word 0xcafecafe                                                        # write the value of expect cause 
+.align 22       
+    .word 0xdeadbeef                                                        # to make the address misaligned for superpage
 .align 12                                     
     rvtest_data:   
-      .word 0xbeefcafe                                                 
-      .word 0xdeadcafe                                                 
-      .word 0x00000000                                                 
-      .word 0x00000000 
+    .word 0xbeefcafe                                                 
+    .word 0xdeadcafe                                                 
+    .word 0x00000000                                                 
+    .word 0x00000000 
 .align 12                                                      
     pgtb_l1:                                                       
         .zero 4096                                                 
@@ -187,3 +186,4 @@ RVTEST_EXIT_LOGIC                                                           # Ex
 
 .align 4; .global tohost;   tohost:   .dword 0;
 .align 4; .global fromhost; fromhost: .dword 0;
+
