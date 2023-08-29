@@ -67,8 +67,7 @@ PTE_LEVEL1_SUPERVISOR:
 
 vm_en:
 
-    li t1,10
-pre_load:
+# -------------------Load Test Prolog-------------------------
 
     TEST_PROLOG(check_load, CAUSE_LOAD_PAGE_FAULT)                      # load the addr and expected cause
 
@@ -80,7 +79,7 @@ check_load:                                                             # test t
     bne t1, x0, test_fail                                               # If exception is expected but not handled then jump to test_fail
     nop
 
-pre_store:
+# -------------------Store Test Prolog------------------------
 
     TEST_PROLOG(check_store, CAUSE_STORE_PAGE_FAULT)                    # load the addr and expected cause
 
@@ -96,7 +95,7 @@ check_store:                                                            # test t
         UMODE_ECALL                                                     # UMODE ecall 
     #endif
 
-pre_execute:
+# -------------------Execute Test Prolog-----------------------
 
     TEST_PROLOG(check_execute, CAUSE_FETCH_PAGE_FAULT)                  # load the addr and expected cause
 
