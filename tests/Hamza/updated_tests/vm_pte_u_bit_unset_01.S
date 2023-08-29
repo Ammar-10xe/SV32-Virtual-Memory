@@ -1,16 +1,16 @@
 #=======================================================================
-#   🌟 U Bit Permission Unset for Level1 PTE 🌟
+# U Bit Permission Unset for Level1 PTE 
 #-----------------------------------------------------------------------
 # Test Description:
 #
 # If PTE does not have the U bit (pte.U=0) permission, accessing it in U
 # mode would raise a page fault exception of the corresponding access type.
 # When satp.mode=sv32 and PTE has (r,w,x) PMP permissions, this test
-# covers the following scenarios in user privilege modes for level1 PTE.
+# covers the following scenarios in user privilege modes for level 1 PTE.
 #
-# 💫 Set PTE.U = 0 and test the read access.
-# 💫 Set PTE.U = 0 and test the write access.
-# 💫 Set PTE.U = 0 and test the execute access.
+# Set PTE.U = 0 and test the read access.
+# Set PTE.U = 0 and test the write access.
+# Set PTE.U = 0 and test the execute access.
 #
 #=======================================================================
 
@@ -36,7 +36,7 @@ _start:
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )         # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
@@ -48,40 +48,37 @@ _start:
 
     SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
     la a1,vm_en                                                            # loads the address of vm_en
-    CHANGE_T0_U_MODE(a1)                                        	   # changes mode M to U and set the MEPC value to a1
+    CHANGE_T0_U_MODE(a1)                                        	       # changes mode M to U and set the MEPC value to a1
 
 # ----------------Virtualization Enabeled-------------------------------
 
 vm_en:
+                                                                  
+# ----------------Load test prolog--------------------------------------
 
-    li t1,10                                                               
-    
-pre_load:
-
-    TEST_PROLOG(check_load,CAUSE_LOAD_PAGE_FAULT)                          # load the addr and expected cause 
-    la a1, rvtest_data                                                     # loads the address of label rvtest_data
+    TEST_PROLOG(check_load,CAUSE_LOAD_PAGE_FAULT)                           # load the addr and expected cause 
+    la a1, rvtest_data                                                      # loads the address of label rvtest_data
 
 check_load:
 
-    lw t1,0(a1)                                                            # tests the load access 
-    nop
+    lw t1,0(a1)                                                             # tests the load access 
+    TEST_STATUS                                                             # checks the status of the test
+# ----------------Store test prolog--------------------------------------
 
-pre_store:
-
-    TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                        # load the addr and expected cause 
-    la a1,rvtest_data                                                      # loads the address of label rvtest_data
+    TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                         # load the addr and expected cause 
+    la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
 check_store:
-    sw t1,0(a1)                                                            # test the store access
-    nop                          
-    SMODE_ECALL                                                            # ecall to go to m mode
+    sw t1,0(a1)                                                             # test the store access
+    TEST_STATUS                                                             # checks the status of the test 
+    UMODE_ECALL                                                             # ecall to go to m mode
 
-pre_execute:
+# ----------------------Execute test prolog------------------------------
 
     TEST_PROLOG(check_execute,CAUSE_FETCH_PAGE_FAULT)                      # load the addr and expected cause 
 
 # -------------LEVEL 1 PTE Setup for execute test------------------------
-                                                                        # Setup a new PTE to test execute
+                                                                           # Setup a new PTE to test execute
     la a1,check_execute                                                    # loads the address of label vm_en
     mv a0, a1                                                              # set the VA to PA (identity mapping)
     ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_X )                          # sets the permission bits
@@ -91,61 +88,78 @@ pre_execute:
 
     SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
     la a1,check_execute                                                    # loads the address of check_execute
-    CHANGE_T0_U_MODE(a1)                                                 # changes mode M to U and set the MEPC
+    CHANGE_T0_U_MODE(a1)                                                   # changes mode M to U and set the MEPC
 
 
 check_execute:
    
-    li t1, 0x45                                                            # page fault should raise 
-    j exit
+    li t1, 0x45                                                             # page fault should raise 
+    TEST_STATUS                                                             # checks the status of the test                                                               
 
+test_pass:
+
+    li x1, 0                                                                # Write 0 in x1 if test pass
+    j exit                                                                  # Jump to exit
+
+test_fail:
+
+    li x1, 1                                                                # Write 1 in x1 if test failed
+    j exit                                                                  # Jump to exit
+                                                                   
 trap_handler:
 
-    csrr t0, mcause                                                        # read the value of mcause 
-    la t1, rvtest_check                                                    # load the address of trvtest_check
+    csrr t0, mcause                                                         # read the value of mcause 
+    la t1, rvtest_check                                                     # load the address of trvtest_check
     
-    lw t2, 0(t1)                                                           # if cause expected then load 1 else 0
-    lw t3, 4(t1)                                                           # load the expected value of mepc 
-    lw t4, 8(t1)                                                           # load the expected value of mcause  
+    lw t2, 0(t1)                                                            # if cause expected then load 1 else 0
+    lw t3, 4(t1)                                                            # load the expected value of mepc 
+    lw t4, 8(t1)                                                            # load the expected value of mcause  
 
-    li  t1, CAUSE_SUPERVISOR_ECALL                                         # load the value of supervisor ecall
-    beq t0,t1,next_instr                                                   # checks if ecall is occured
+    li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
+    beq t0,t1,next_instr                                                    # checks if ecall is occured
 
-    li  t1, CAUSE_USER_ECALL                                               # load the value of user ecall
-    beq t0,t1,next_instr                                                   # checks for ecall is occured
+    li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
+    beq t0,t1,next_instr                                                    # checks for ecall is occured
 
-    beqz t2, exit                                                          # Jumps to exit if cause is not expected
+    beqz t2, exit                                                           # Jumps to exit if cause is not expected
  
-    csrr t5,mepc                                                           # read the value of mepc 
-    bne t3,t5,exit                                                         # check the value of mepc with it's expected value
+    csrr t5,mepc                                                            # read the value of mepc 
+    bne t3,t5,exit                                                          # check the value of mepc with it's expected value
 
-    bne  t0, t4, exit                                                      # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+    bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
-    li t5, CAUSE_FETCH_PAGE_FAULT                                          # load the value of fetch page fault exception 
-    beq t0,t5,next_instr                                                   # if fetch page fault jump to next instr in M mode
-
+    li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
+    beq t0,t5,next_instr                                                    # if fetch page fault jump to next instr in M mode
 
 continue_execution:
 
-    INCREMENT_MEPC  _SUMODE_                                               # update the value of mepc 
-    mret                                                                   # return 
+    INCREMENT_MEPC   _SUMODE_                                               # update the value of mepc
+    j trap_epilogs
 
 next_instr:
 
-    INCREMENT_MEPC  _MMODE_                                                # update the value of mepc 
-    li t1,MSTATUS_MPP                                                      # update the MPP to MSTATUS_MPP for M mode
-    csrs mstatus,t1                                                        # update the value mstatus MPP 
-    mret                                                                   # return 
+    INCREMENT_MEPC   _MMODE_                                                # update the value of mepc
+    li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
+    csrs mstatus,t1                                                         # update the value mstatus MPP
+
+trap_epilogs:
+
+    la t1, rvtest_check                                                     # load the addr of rvtest_check
+    li t2, 0
+    sw t2, 0(t1)                                                            # Clear the expected cause
+    sw t2, 4(t1)                                                            # Clear the exception PC
+    sw t2, 8(t1)                                                            # Clear cause execution number
+    mret
 
 
-COREV_VERIF_EXIT_LOGIC                                                          # Exit logic 
+COREV_VERIF_EXIT_LOGIC                                                      # Exit logic 
 
 .data  
-.align 24                                                                  # Superpage align  
+.align 24                                                                   # Superpage align  
     rvtest_check: 
-      .word 0xdeadbeef                                                     # 1 for cause expected 0  for no cause 
-      .word 0xbeefdead                                                     # write the value of mepc here (where  cause is expected)
-      .word 0xcafecafe                                                     # write the value of expect cause 
+      .word 0xdeadbeef                                                      # 1 for cause expected 0  for no cause 
+      .word 0xbeefdead                                                      # write the value of mepc here (where  cause is expected)
+      .word 0xcafecafe                                                      # write the value of expect cause 
 .align 22                                     
     rvtest_data:   
       .word 0xbeefcafe                                                 

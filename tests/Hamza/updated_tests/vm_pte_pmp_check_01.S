@@ -1,13 +1,20 @@
-###################################################################################################
-# Verification Goal:   Remove X PMP permission of the code section and R/W permission of the data #
-#                      section for Level 1 PTE. For execute, read, and write access, fetch,       #
-#                      load, and store/amo access faults should be raised, respectively.          #
-#                                                                                                 #
-# Feature Description: If a PTE has valid and non-reserved RWX permissions, but the translated    #
-#                      physical address (pte.ppn of the leaf PTE + offset) does not have (r,w,x)  #
-#                      PMP permissions, accessing the translated physical address will raise an   #
-#                      access fault exception.                                                    #
-###################################################################################################
+#=======================================================================
+#  RWX Access of Level1 PTE in User and Supervisor mode when valid
+#  bit is low 
+#-----------------------------------------------------------------------
+# Test Description:
+#
+# If PTE does not have (r,w,x) PMP permissions, then accessing it would 
+# raise access fault exception of the corresponding access type. 
+# When satp.mode=sv32 and PMP have no (r,w,x) PMP permissions, then this test
+# covers the following scenarios in both supervisor and user privilege
+# modes for level 1 PTE.
+#
+# - Set PMP.R = 0 for PTE and test the read access.
+# - Set PMP.X = 0 for PTE and test the execute access.
+# - Set PMP.W = 0 for PTE the write access.
+#
+#=======================================================================
 
 #include "macros.h"
 
@@ -110,8 +117,7 @@ PTE_LEVEL1_SUPERVISOR:
 
 vm_en:
 
-    li t1,10
-pre_load:
+# ----------------Load test prolog--------------------------------------
 
     TEST_PROLOG(check_load, CAUSE_LOAD_ACCESS)                          # load the addr and expected cause
     la a1, pgtb_l1                                                      # load base address of PGTB Level 1 for load access test
@@ -119,23 +125,26 @@ pre_load:
 check_load:                                                             # test the load access
 
     lw t1,0(a1)  
-    nop
+    TEST_STATUS
 
-pre_store:                                                      
+# ----------------Store test prolog--------------------------------------
+                                                    
 
     TEST_PROLOG(check_store, CAUSE_STORE_ACCESS)                        # load the addr and expected cause
     la a1, pgtb_l1                                                      # load base address of PGBTB Level 1 for store access test
 
 check_store:                                                            # test the store access
     sw t1,0(a1)
-    nop                          
+    TEST_STATUS
+
     #ifdef smode
         SMODE_ECALL                                                     # SMODE ecall 
     #else
         UMODE_ECALL                                                     # UMODE ecall 
     #endif
 
-pre_execute:
+# ----------------------Setting PMP Permissions for Region 2------------------------------
+
 
     la t2, pgtb_l1                                                      # loads the base address of level1 4kbpage table 
     srli t2, t2, PMP_SHIFT                                              # Right shift the address of level 1 page table  by PMP_Shift(2)
@@ -150,7 +159,7 @@ pre_execute:
     sfence.vma
 
     la a1, check_execute
-
+# ----------------change the mode---------------------
     #ifdef smode
         CHANGE_T0_S_MODE(a1)                                            # changes mode M to S and set the MEPC 
     #else
@@ -158,47 +167,66 @@ pre_execute:
     #endif
 
 check_execute:                                                          # test the execute access
-    li t1, 0x45                                                         # page fault should raise
+    li t1, 0x45                                                         
     #ifdef smode
         SMODE_ECALL                                                     # SMODE ecall 
     #else
         UMODE_ECALL                                                     # UMODE ecall 
     #endif
-    j exit
+
+test_pass:
+
+    li x1, 0                                                                # Write 0 in x1 if test pass
+    j exit                                                                  # Jump to exit
+
+test_fail:
+
+    li x1, 1                                                                # Write 1 in x1 if test failed
+    j exit                                                                  # Jump to exit
 
 trap_handler:
-    csrr t0, mcause                                                     # read the value of mcause
-    la t1, rvtest_check                                                 # load the address of trvtest_check
 
-    lw t2, 0(t1)                                                        # if cause expected then load 1 else 0
-    lw t3, 4(t1)                                                        # load the expected value of mepc
-    lw t4, 8(t1)                                                        # load the expected value of mcause
+    csrr t0, mcause                                                         # read the value of mcause 
+    la t1, rvtest_check                                                     # load the address of trvtest_check
+    
+    lw t2, 0(t1)                                                            # if cause expected then load 1 else 0
+    lw t3, 4(t1)                                                            # load the expected value of mepc 
+    lw t4, 8(t1)                                                            # load the expected value of mcause  
 
-    li  t1, CAUSE_SUPERVISOR_ECALL                                      # load the value of supervisor ecall
-    beq t0,t1,next_instr                                                # checks if ecall is occured
+    li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
+    beq t0,t1,next_instr                                                    # checks if ecall is occured
 
-    li  t1, CAUSE_USER_ECALL                                            # load the value of user ecall
-    beq t0,t1,next_instr                                                # checks for ecall is occured
+    li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
+    beq t0,t1,next_instr                                                    # checks for ecall is occured
 
-    beqz t2, exit                                                       # Jumps to exit if cause is not expected
-    csrr t5,mepc                                                        # read the value of mepc
+    beqz t2, exit                                                           # Jumps to exit if cause is not expected
+ 
+    csrr t5,mepc                                                            # read the value of mepc 
+    bne t3,t5,exit                                                          # check the value of mepc with it's expected value
 
-    bne t3,t5,exit                                                      # check the value of mepc with it's expected value
-    bne  t0, t4, exit                                                   # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+    bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
-    li t5, CAUSE_FETCH_ACCESS                                           # load the value of fetch access fault
-    beq t0, t5, next_instr                                              # if fetch access fault jump to next instr in M mode
+    li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
+    beq t0,t5,next_instr                                                    # if fetch page fault jump to next instr in M mode
 
 continue_execution:
 
-    INCREMENT_MEPC   _SUMODE_                                           # update the value of mepc
-    mret
+    INCREMENT_MEPC   _SUMODE_                                               # update the value of mepc
+    j trap_epilogs
 
 next_instr:
 
-    INCREMENT_MEPC   _MMODE_                                            # update the value of mepc
-    li t1,MSTATUS_MPP                                                   # update the MPP to MSTATUS_MPP for M mode
-    csrs mstatus,t1                                                     # update the value mstatus MPP
+    INCREMENT_MEPC   _MMODE_                                                # update the value of mepc
+    li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
+    csrs mstatus,t1                                                         # update the value mstatus MPP
+
+trap_epilogs:
+
+    la t1, rvtest_check                                                     # load the addr of rvtest_check
+    li t2, 0
+    sw t2, 0(t1)                                                            # Clear the expected cause
+    sw t2, 4(t1)                                                            # Clear the exception PC
+    sw t2, 8(t1)                                                            # Clear cause execution number
     mret
 
 COREV_VERIF_EXIT_LOGIC                                                  # Exit logic 
