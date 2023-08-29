@@ -62,36 +62,22 @@ PTE_LEVEL1_SUPERVISOR:
 
 vm_en:
 
-# ----------------Load test prolog--------------------------------------                                                           
+    la a1, rvtest_data                                                      # loads the address of label rvtest_data
 
-    TEST_PROLOG(check_load, CAUSE_LOAD_PAGE_FAULT)                         # load the addr and expected cause
+check_load:
 
-check_load:                                                                # test the load access
+    lw t1,0(a1)                                                             # tests the load access 
 
-    lw t1,0(a1)  
-    TEST_STATUS                                                             # checks the status of the test
+check_store:
 
-# ----------------Store test prolog--------------------------------------
+    sw t1,0(a1)                                                             # test the store access
+    SMODE_ECALL                                                             # SMODE ecall 
 
-    TEST_PROLOG(check_store, CAUSE_STORE_PAGE_FAULT)                        # load the addr and expected cause
-
-check_store:                                                                # test the store access
-    sw t1,0(a1)
-    TEST_STATUS                                                             # checks the status of the test
-    
-    #ifdef smode
-        SMODE_ECALL                                                         # SMODE ecall 
-    #else
-        UMODE_ECALL                                                         # UMODE ecall 
-    #endif
       
 # ----------------------Execute test prolog------------------------------
 
     TEST_PROLOG(check_execute, CAUSE_FETCH_PAGE_FAULT)                      # load the addr and expected cause
   
-
-PTE_LEVEL1_SUPERVISOR_EXECUTE:
-
 # -------------LEVEL 1 PTE Setup for execute test------------------------
                                                                             # Setup a new PTE to test execute 
     la a1,check_execute                                                     # loads the address of label vm_en
@@ -108,6 +94,7 @@ PTE_LEVEL1_SUPERVISOR_EXECUTE:
 check_execute:                                                              # test the execute access
     li t1, 0x45                                                             # page fault should raise 
     TEST_STATUS                                                             # checks the status of the test
+
 test_pass:
 
     li x1, 0                                                                # Write 0 in x1 if test pass
@@ -164,10 +151,10 @@ trap_epilogs:
     mret
 
 RVTEST_EXIT_LOGIC                                                           # Exit logic
+
 .data  
 .align 24
     rvtest_check: 
-
         .word 0xdeadbeef                                                    # 1 for cause expected 0  for no cause 
         .word 0xbeefdead                                                    # write the value of mepc here (where  cause is expected)
         .word 0xcafecafe                                                    # write the value of expect cause 
