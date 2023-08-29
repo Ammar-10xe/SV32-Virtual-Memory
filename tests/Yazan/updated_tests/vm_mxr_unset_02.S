@@ -73,19 +73,16 @@ PTE_LEVEL0_SUPERVISOR:
 
 vm_en:
 
-    li t1,10
-
-pre_load:
+# -------------------Load Test Prolog-------------------------
 
     TEST_PROLOG(check_load, CAUSE_LOAD_PAGE_FAULT)                      # load the addr and expected cause
 
 check_load:                                                             # test the load access
 
     lw t1,0(a1)  
+    TEST_STATUS                                                         # checks the status of the test
     nop
-    la a1, rvtest_check                                                 # load the addr of rvtest_check
-    lw t1, 0(a1)                                                        # load value to check if expected exception is handled
-    bne t1, x0, test_fail                                               # If exception is expected but not handled then jump to test_fail
+
     #ifdef smode
         SMODE_ECALL                                                     # SMODE ecall 
     #else

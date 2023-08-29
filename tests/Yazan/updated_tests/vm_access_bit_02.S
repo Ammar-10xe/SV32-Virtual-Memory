@@ -72,36 +72,31 @@ PTE_LEVEL0_SUPERVISOR:
 
 vm_en:
 
-    li t1,10
-pre_load:
+# -------------------Load Test Prolog-------------------------
 
     TEST_PROLOG(check_load, CAUSE_LOAD_PAGE_FAULT)                      # load the addr and expected cause
 
 check_load:                                                             # test the load access
 
     lw t1,0(a1)  
-    la a1, rvtest_check                                                 # load the addr of rvtest_check
-    lw t1, 0(a1)                                                        # load value to check if expected exception is handled
-    bne t1, x0, test_fail                                               # If exception is expected but not handled then jump to test_fail
+    TEST_STATUS                                                         # checks the status of the test
     nop
 
-pre_store:
+# -------------------Store Test Prolog------------------------
 
     TEST_PROLOG(check_store, CAUSE_STORE_PAGE_FAULT)                    # load the addr and expected cause
 
 check_store:                                                            # test the store access
     sw t1,0(a1)
-    nop           
-    la a1, rvtest_check                                                 # load the addr of rvtest_check
-    lw t1, 0(a1)                                                        # load value to check if expected exception is handled
-    bne t1, x0, test_fail                                               # If exception is expected but not handled then jump to test_fail              
+    nop          
+    TEST_STATUS                                                             # checks the status of the test           
     #ifdef smode
         SMODE_ECALL                                                     # SMODE ecall 
     #else
         UMODE_ECALL                                                     # UMODE ecall 
     #endif
 
-pre_execute:
+# -------------------Execute Test Prolog-----------------------
 
     TEST_PROLOG(check_execute, CAUSE_FETCH_PAGE_FAULT)                  # load the addr and expected cause
 
