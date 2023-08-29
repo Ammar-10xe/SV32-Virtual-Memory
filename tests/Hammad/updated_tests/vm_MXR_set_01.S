@@ -1,18 +1,13 @@
 #=======================================================================
-#   🌟 RWX Access of Level1 PTE in User and Supervisor mode when valid
-#      bit is low  🌟
+#      Read Access of PTE at level1 in User and Supervisor mode when 
+#      mstatus.mxr = 1  and only PTE.X = 1
 #-----------------------------------------------------------------------
 # Test Description:
-#
-# If PTE does not have the Valid (pte.V=0) permission, accessing it
-# would raise a page fault exception of the corresponding access type.
-# When satp.mode=sv32 and PTE has (r,w,x) PMP permissions, this test
+# If PTE has only execute permission (pte.x = 1) and s/mstatus.MXR=1,
+# then read access on that PTE should be successful without having
+# explicit read permission (pte.r=0). This test
 # covers the following scenarios in both supervisor and user privilege
 # modes for level1 PTE.
-#
-# 💫 Set PTE.V = 0 and test the read access.
-# 💫 Set PTE.V = 0 and test the write access.
-# 💫 Set PTE.V = 0 and test the execute access.
 #
 #=======================================================================
 
@@ -44,7 +39,7 @@ _start:
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_R )      # sets the permission bits
+    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_D | PTE_X )				   # sets the permission bits -- only X permission
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
@@ -56,6 +51,8 @@ _start:
 
     SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
     la a1,vm_en                                                            # loads the address of vm_en
+    li t4, MSTATUS_MXR
+    csrs mstatus, t4    				                                   #TVM bit set on mstatus
     #ifdef smode																													 
         CHANGE_T0_S_MODE(a1)                                        	   # changes mode M to S and set the MEPC value to a1
     #else
@@ -76,43 +73,6 @@ pre_load:
 check_load:
 
     lw t1,0(a1)                                                             # tests the load access 
-    nop
-
-pre_store:
-
-    TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                         # load the addr and expected cause 
-    la a1,rvtest_data                                                       # loads the address of label rvtest_data
-
-check_store:
-    sw t1,0(a1)                                                             # test the store access
-    nop                          
-    SMODE_ECALL                                                             # ecall to go to m mode
-
-pre_execute:
-
-    TEST_PROLOG(check_execute,CAUSE_FETCH_PAGE_FAULT)                       # load the addr and expected cause 
-
-# -------------LEVEL 1 PTE Setup for execute test------------------------
-                                                                            # Setup a new PTE to test execute
-    la a1,check_execute                                                     # loads the address of label vm_en
-    mv a0, a1                                                               # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X )                       # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
-
-# ----------------Set the SATP and change the mode---------------------
-
-    SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
-    la a1,check_execute                                                     # loads the address of check_execute
-    #ifdef smode
-      CHANGE_T0_S_MODE(a1)                                                  # changes mode M to S and set the MEPC
-    #else
-      CHANGE_T0_U_MODE(a1)                                                  # changes mode M to U and set the MEPC
-    #endif
-
-
-check_execute:
-   
-    li t1, 0x45                                                             # page fault should raise 
     j exit
 
 trap_handler:

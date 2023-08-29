@@ -1,27 +1,19 @@
-#=======================================================================
-#  PMP permissions on Physical Address in User and supervisor mode
-#  at level 0 PTE
-#-----------------------------------------------------------------------
-# Test Description:
-#
-# If PTE has valid and non-reserved RWX permissions, but the translated
-# Physical address (pte.ppn of leaf PTE + offset) does not have (r,w,x)
-# PMP permissions, then accessing the translated Physical address would
-# raise access fault exception.
-#
-# - Remove read PMP permission of translated Physical Address in pmpcfg
-#   and test the read acces.
-# - Remvoe write PMP permission of translated Physical Address in pmpcfg
-#   and test the write access.
-# - Remove execute PMP permission of translated Physical Address in 
-#   pmpcfg and test the execute access.
-#
-#=======================================================================
+###################################################################################################
+# Verification Goal:   Remove X PMP permission of the code section and R/W permission of the data #
+#                      section for Level 0 PTE. For execute, read, and write access, fetch,       #
+#                      load, and store/amo access faults should be raised, respectively.          #
+#                                                                                                 #
+# Feature Description: If a PTE has valid and non-reserved RWX permissions, but the translated    #
+#                      physical address (pte.ppn of the leaf PTE + offset) does not have (r,w,x)  #
+#                      PMP permissions, accessing the translated physical address will raise an   #
+#                      access fault exception.                                                    #
+###################################################################################################
 
-#include "../../../macros1.h"
+#include "../../macros1.h"
 
 
 #define NAPOT_RANGE_4KB 0x1FF                                           # Set 4kB range with NAPOT
+#define NAPOT_RANGE_1KB 0x7F                                            # Set 1kB range with NAPOT
 #define NAPOT_RANGE_32B 0x3                                             # Set 32B range with NAPOT
 
 #define _MMODE_ "M"
@@ -53,9 +45,9 @@ _start:
     csrw pmpaddr1, t2                                                   # Region 2 for the pmp permission
     sfence.vma
 
-    la t2, pgtb_l0                                                      # loads the base address of LEVEL0 4kbpage table                 
+    la t2, pgtb_l0                                                      # loads the base address of LEVEL0 4kbpage table
     srli t2, t2, PMP_SHIFT                                              # Right shift the address of LEVEL 0 page table  by PMP_Shift(2)		
-    ori t2, t2, NAPOT_RANGE_4KB                                         # Selects the range of 4kB						 	 										
+    ori t2, t2, NAPOT_RANGE_1KB                                         # Selects the range of 4kB						 	 										
     csrw pmpaddr4, t2                                                   # Region 3 for the pmp permission
     sfence.vma
 
@@ -65,16 +57,27 @@ _start:
 	csrw pmpaddr2, t2                                               # Region 4 for the pmp permission
     sfence.vma
 
-    la t2, rvtest_data                                                  # loads the base address of rvtest_data label        
+    la t2, pgtb_l0                                                      # loads the base address of rvtest_data label
+    la t5, vm_en
+    srli t5, t5, 20                                                     # Remove PMP permission from PGTB level from 0x800 index for test
+    add t2, t2, t5            
     srli t2, t2, PMP_SHIFT                                              # Right shift the address of rvtest_data label by PMP_Shift(2)
     ori t2, t2, NAPOT_RANGE_32B                                         # Selects the range of 32B    
 	csrw pmpaddr3, t2                                               # Region 5 for the pmp permission
     sfence.vma
 
+    la t2, tohost                                                       # loads the base address of tohost label        
+    srli t2, t2, PMP_SHIFT                                              # Right shift the address of tohost label by PMP_Shift(2)
+    ori t2, t2, NAPOT_RANGE_32B                                         # Selects the range of 32B    
+    csrw pmpaddr5, t2                                                   # Region 5 for the pmp permission
+    sfence.vma
+
     # Region 1, 2, 3, 4: NAPOT with RWX PMP Permissions
-    li t2, ((PMP_NAPOT | PMP_X) << 24) | ((PMP_NAPOT | PMP_X | PMP_W | PMP_R) << 16) | ((PMP_NAPOT | PMP_X | PMP_W | PMP_R) << 8) | (PMP_NAPOT | PMP_X | PMP_W | PMP_R)
+    li t2, ((PMP_NAPOT) << 24) | ((PMP_NAPOT | PMP_X | PMP_W | PMP_R) << 16) | ((PMP_NAPOT | PMP_X | PMP_W | PMP_R) << 8) | (PMP_NAPOT | PMP_X | PMP_W | PMP_R)
     csrw pmpcfg0, t2                                                    # Write PMP Regions Configration
-    li t2, (PMP_NAPOT | PMP_X | PMP_W | PMP_R)                          # Region5: NAPOT with RWX PMP Permissions
+    # Region 5, 6: NAPOT with RWX PMP Permissions
+    # Region 6: NAPOT with RWX PMP Permissions
+    li t2, (((PMP_NAPOT | PMP_X | PMP_W | PMP_R) << 8) | (PMP_NAPOT | PMP_X | PMP_W | PMP_R) )
     csrw pmpcfg1, t2                                                    # Write PMP Regions Configration
     sfence.vma
 
@@ -124,25 +127,27 @@ vm_en:
 pre_load:
 
     TEST_PROLOG(check_load, CAUSE_LOAD_ACCESS)                          # load the addr and expected cause
+    la a1, pgtb_l0                                                      # load base address of PGTB level 0
+    la t5, _start
+    srli t5, t5, 10
+    add a1, a1, t5                                                      # make appropriate address to test load at level 0
 
 check_load:                                                             # test the load access
 
     lw t1,0(a1)  
-    la a1, rvtest_check                                                 # load the addr of rvtest_check
-    lw t1, 0(a1)                                                        # load value to check if expected exception is handled
-    bne t1, x0, test_fail                                               # If exception is expected but not handled then jump to test_fail
     nop
 
 pre_store:
 
     TEST_PROLOG(check_store, CAUSE_STORE_ACCESS)                        # load the addr and expected cause
+    la a1, pgtb_l0                                                      # load base address of PGTB level 0
+    la t5, _start
+    srli t5, t5, 10
+    add a1, a1, t5                                                      # make appropriate address to test load at level 0
 
 check_store:                                                            # test the store access
     sw t1,0(a1)
     nop                          
-    la a1, rvtest_check                                                 # load the addr of rvtest_check
-    lw t1, 0(a1)                                                        # load value to check if expected exception is handled
-    bne t1, x0, test_fail                                               # If exception is expected but not handled then jump to test_fail
     #ifdef smode
         SMODE_ECALL                                                     # SMODE ecall 
     #else
@@ -151,12 +156,16 @@ check_store:                                                            # test t
 
 pre_execute:
 
-    TEST_PROLOG(check_execute, CAUSE_FETCH_ACCESS)                      # load the addr and expected cause
+    la t2, pgtb_l0                                                      # loads the base address of LEVEL0 4kbpage table
+    srli t2, t2, PMP_SHIFT                                              # Right shift the address of LEVEL 0 page table  by PMP_Shift(2)		
+    ori t2, t2, NAPOT_RANGE_4KB                                         # Selects the range of 4kB						 	 										
+    csrw pmpaddr4, t2                                                   # Region 3 for the pmp permission
+    sfence.vma
 
     li t2, (PMP_NAPOT | PMP_X | PMP_W | PMP_R)
-    csrc pmpcfg0, t2                                                    # Clear PMP Region 1 Configration
+    csrc pmpcfg1, t2                                                    # Clear PMP Region 3 Configration
     li t2, (PMP_NAPOT | PMP_W | PMP_R)
-    csrs pmpcfg0, t2                                                    # Set PMP Region 1 Configration
+    csrs pmpcfg1, t2                                                    # Set PMP Region 3 Configration
     sfence.vma
 
     la a1, check_execute
@@ -170,10 +179,12 @@ pre_execute:
 
 check_execute:                                                          # test the execute access
     li t1, 0x45                                                         # page fault should raise 
-    la a1, rvtest_check                                                 # load the addr of rvtest_check
-    lw t1, 0(a1)                                                        # load value to check if expected exception is handled
-    bne t1, x0, test_fail                                               # If exception is expected but not handled then jump to test_fail
-    j test_pass
+    #ifdef smode
+        SMODE_ECALL                                                     # SMODE ecall 
+    #else
+        UMODE_ECALL                                                     # UMODE ecall 
+    #endif
+    j exit
 
 trap_handler:
     csrr t0, mcause                                                     # read the value of mcause
@@ -189,11 +200,11 @@ trap_handler:
     li  t1, CAUSE_USER_ECALL                                            # load the value of user ecall
     beq t0,t1,next_instr                                                # checks for ecall is occured
 
-    beqz t2, test_fail                                                  # Jumps to exit if cause is not expected
+    beqz t2, exit                                                       # Jumps to exit if cause is not expected
     csrr t5,mepc                                                        # read the value of mepc
 
-    bne t3,t5, test_fail                                                # check the value of mepc with it's expected value
-    bne t0, t4, test_fail                                               # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+    bne t3,t5,exit                                                      # check the value of mepc with it's expected value
+    bne  t0, t4, exit                                                   # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
     li t5, CAUSE_FETCH_ACCESS                                           # load the value of fetch access fault
     beq t0, t5, next_instr                                              # if fetch access fault jump to next instr in M mode
@@ -201,28 +212,14 @@ trap_handler:
 continue_execution:
 
     INCREMENT_MEPC   _SUMODE_                                           # update the value of mepc
-    j trap_epilogs
+    mret
 
 next_instr:
 
     INCREMENT_MEPC   _MMODE_                                            # update the value of mepc
     li t1,MSTATUS_MPP                                                   # update the MPP to MSTATUS_MPP for M mode
     csrs mstatus,t1                                                     # update the value mstatus MPP
-
-trap_epilogs:
-    la t1, rvtest_check                                                 # load the addr of rvtest_check
-    li t2, 0
-    sw t2, 0(t1)                                                        # Clear the expected cause
-    sw t2, 4(t1)                                                        # Clear the exception PC
-    sw t2, 8(t1)                                                        # Clear cause execution number
     mret
-
-test_pass:
-    li x1, 0                                                            # Write 0 in x1 if test pass
-    j exit                                                              # Jump to exit
-
-test_fail:
-    li x1, 1                                                            # Write 1 in x1 if test failed
 
 COREV_VERIF_EXIT_LOGIC                                                  # Exit logic 
 

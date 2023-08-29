@@ -88,13 +88,17 @@ exit:                                                              ;\
     csrr t1, mepc                                                  ;\
     lw t5, 0(t1)                                                   ;\
     li t2, 3                                                       ;\
-    and t2, t2, t5                                                 ;\
-    li t3, 3                                                       ;\
-    bne t2, t3, not_32_bit_Instr_\label_suffix                     ;\
+    and t5, t5, t2                                                 ;\
+    bne t2, t5, not_32_bit_Instr_\label_suffix                     ;\
     addi t1, t1, 4                                                 ;\
     j write_mepc_\label_suffix                                     ;\
     not_32_bit_Instr_\label_suffix:                                ;\
-    addi t1, t1, 2                                                 ;\ 
+    addi t1, t1, 2                                                 ;\
     write_mepc_\label_suffix:                                      ;\
     csrw mepc, t1                                                  ;\
 .endm                                                              ;
+
+#define TEST_STATUS                                                ;\
+    la a1, rvtest_check                                            ;\
+    lw t1, 0(a1)                                                   ;\
+    bne t1, x0, test_fail                                          ;
