@@ -1,5 +1,5 @@
 #=======================================================================
-#      Read Access of PTE at level0 in User and Supervisor mode when 
+#      Read Access of PTE at level1 in User and Supervisor mode when 
 #      mstatus.mxr = 1  and only PTE.X = 1
 #-----------------------------------------------------------------------
 # Test Description:
@@ -8,7 +8,9 @@
 # explicit read permission (pte.r=0). This test
 # covers the following scenarios in both supervisor and user privilege
 # modes for level0 PTE.
-#
+#                           Level 0
+#   - mstatus.mxr = 1 and only PTE.X = 1  with the READ access
+#     in the supervisor and user mode
 #=======================================================================
 
 #include "macros.h"
@@ -58,7 +60,7 @@ _start:
     SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
     la a1,vm_en                                                            # loads the address of vm_en
     li t4, MSTATUS_MXR
-    csrs mstatus, t4    				                                   #TVM bit set on mstatus
+    csrs mstatus, t4    				                                   #MXR bit set on mstatus
     #ifdef smode																													 
         CHANGE_T0_S_MODE(a1)                                        	   # changes mode M to S and set the MEPC value to a1
     #else

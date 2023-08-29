@@ -1,5 +1,5 @@
 #=======================================================================
-#   🌟 SATP mode = Bare for Level 1 PTE 🌟
+#   🌟 SATP mode =Bare for Level1 PTE 🌟
 #-----------------------------------------------------------------------
 # Test Description:
 #
@@ -7,12 +7,12 @@
 # would raise a ILLEGAL_INSTRUCTION fault exception.
 # When satp.mode=Bare and PTE has (r,w,x) PMP permissions, this test
 # covers the following scenarios in both supervisor and user privilege
-# modes for level 1 PTE.
+# modes for level1 PTE.
 #
 # 💫 Set SATP = Bare and rest bits to zeros and test the access to PTE.
 #=======================================================================
 
-#include "../../../macros1.h"
+#include "macros.h"
 
 #ifdef smode
     #define SET_PTE_U 0
@@ -46,7 +46,7 @@ pre_access:
 
 # ----------------Set the SATP to Bare_Mode and change the mode---------------------
 
-    csrw satp, x0           	                                           # Write satp with all zeros (bare mode)
+    csrw satp, 0x04           	                                           # Write satp with no zero value (bare mode)
     la a1 , va                                                             # loads the virual address of check_access
     #ifdef smode
       CHANGE_T0_S_MODE(a1)                                                 # changes mode M to S and set the MEPC
@@ -106,7 +106,7 @@ Back_to_check_access:
     mret                                                                   # return
 
 
-RVTEST_EXIT_LOGIC                                                          # Exit logic 
+COREV_VERIF_EXIT_LOGIC                                                          # Exit logic 
 
 .data  
 .align 24                                                                  # Superpage align  

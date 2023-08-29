@@ -1,26 +1,26 @@
 #=======================================================================
-#   🌟 U Bit Permission set for Level 0 PTE 🌟
+#   🌟 U Bit Permission Unset for Level 0 PTE 🌟
 #-----------------------------------------------------------------------
 # Test Description:
 #
-# If PTE belongs to user mode i.e. its U permission bit is set (pte.u = 1),
-# then accessing that PTE in user mode should be successful if the
-# (r,w,x) permission of PTE is granted.
+# If PTE does not have the U bit (pte.U=0) permission, accessing it in U
+# mode would raise a page fault exception of the corresponding access type.
 # When satp.mode=sv32 and PTE has (r,w,x) PMP permissions, this test
-# covers the following scenarios in user privilege modes for level1 PTE.
+# covers the following scenarios in user privilege modes for level 0 PTE.
 #
-# 💫 Set PTE.U = 1 & PTE.R = 1 and test the read access.
-# 💫 Set PTE.U = 1 & PTE.W = 1 and test the write access.
-# 💫 Set PTE.U = 1 & PTE.X = 1 and test the execute access.
+# 💫 Set PTE.U = 0 and test the read access.
+# 💫 Set PTE.U = 0 and test the write access.
+# 💫 Set PTE.U = 0 and test the execute access.
 #
 #=======================================================================
 
-#include "../../../macros1.h"
+#include "macros.h"
 #define _MMODE_  "M"
 #define _SUMODE_ "SU"
 
 .text
 .global _start
+.option norvc
 
 _start:
     ALL_MEM_PMP                                                            # PMP permission to all the memory
@@ -36,14 +36,12 @@ _start:
 # ----------------LEVEL 0 PTE Setup for load and store test--------------
     la a1,vm_en                                                            # loads the address of label vm_en
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_V | PTE_W )                  # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_V )                  # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
-    mv a0, a1                                             
-    TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                         # load the addr and expected cause 
-    la a1,rvtest_data                 # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_X | PTE_U | PTE_W | PTE_R )  # sets the permission bits
+    mv a0, a1                                                              # set the VA to PA (identity mapping)
+    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_X | PTE_W | PTE_R )          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
@@ -91,7 +89,7 @@ pre_execute:
                                                                             # Setup a new PTE to test execute
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1                                                               # VA = PA - Identity Map
-    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_U | PTE_X )                           # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_X )                           # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level0
 
 # ----------------Set the SATP and change the mode---------------------
@@ -143,7 +141,7 @@ next_instr:
     mret                                                                   # return 
 
 
-RVTEST_EXIT_LOGIC                                                           # Exit logic 
+COREV_VERIF_EXIT_LOGIC                                                           # Exit logic 
 
 .data  
 .align                                                                     

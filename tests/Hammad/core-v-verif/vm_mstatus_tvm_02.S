@@ -7,8 +7,9 @@
 # raise illegal instruction exception in S-mode. This test
 # covers the following scenarios in both supervisor and user privilege
 # modes for level0 PTE.
-#
-#
+#                           Level 0
+#   - mstatus.tvm = 1 and test the RW access of satp and sfence in 
+#     in supervisor and user mode
 #=======================================================================
 
 #include "macros.h"
@@ -96,6 +97,11 @@ pre_store_sfence:
 
 check_store_sfence:
     sfence.vma                                                             # test the store access
+    #ifdef smode
+        SMODE_ECALL                                                         # SMODE ecall 
+    #else
+        UMODE_ECALL                                                         # UMODE ecall 
+    #endif	
     j exit
 
 trap_handler:

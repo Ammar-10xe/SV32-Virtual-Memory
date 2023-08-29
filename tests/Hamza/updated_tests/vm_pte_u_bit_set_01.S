@@ -1,46 +1,50 @@
 #=======================================================================
-#   🌟 U Bit Permission Unset for Level1 PTE 🌟
+#   🌟 U Bit Permission set for Level 1 PTE 🌟
 #-----------------------------------------------------------------------
 # Test Description:
 #
-# If PTE does not have the U bit (pte.U=0) permission, accessing it in U
-# mode would raise a page fault exception of the corresponding access type.
+# If PTE belongs to user mode i.e. its U permission bit is set (pte.u = 1),
+# then accessing that PTE in user mode should be successful if the
+# (r,w,x) permission of PTE is granted.
 # When satp.mode=sv32 and PTE has (r,w,x) PMP permissions, this test
-# covers the following scenarios in user privilege modes for level1 PTE.
+# covers the following scenarios in user privilege modes for level 1 PTE.
 #
-# 💫 Set PTE.U = 0 and test the read access.
-# 💫 Set PTE.U = 0 and test the write access.
-# 💫 Set PTE.U = 0 and test the execute access.
+# 💫 Set PTE.U = 1 & PTE.R = 1 and test the read access.
+# 💫 Set PTE.U = 1 & PTE.W = 1 and test the write access.
+# 💫 Set PTE.U = 1 & PTE.X = 1 and test the execute access.
 #
 #=======================================================================
 
-#include "../../../macros1.h"
+#include "macros.h"
 #define _MMODE_  "M"
 #define _SUMODE_ "SU"
 
 .text
 .global _start
+.option norvc
 
 _start:
     ALL_MEM_PMP                                                            # PMP permission to all the memory
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
+    la t1,rvtest_data
+    sw t1,0(t1)
     
 # ----------------LEVEL 1 PTE Setup for load and store test------------
 
     la a1,vm_en                                                            # loads the address of label vm_en
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_V )                  # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V | PTE_U )                  # sets the permission bits
     PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l1, LEVEL1 )                     # setup the PTE for level1
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )         # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V | PTE_U )  # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)                                          
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V )          # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V | PTE_U )          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode----------------------
@@ -53,49 +57,35 @@ _start:
 
 vm_en:
 
-    li t1,10                                                               
-    
-pre_load:
-
-    TEST_PROLOG(check_load,CAUSE_LOAD_PAGE_FAULT)                          # load the addr and expected cause 
-    la a1, rvtest_data                                                     # loads the address of label rvtest_data
-
+    la a1, rvtest_data                                                     # load addr of rvtest_data
 check_load:
-
+    
     lw t1,0(a1)                                                            # tests the load access 
-    nop
-
-pre_store:
-
-    TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                        # load the addr and expected cause 
-    la a1,rvtest_data                                                      # loads the address of label rvtest_data
 
 check_store:
+    la a1, rvtest_data                                                     # load addr of rvtest_data
     sw t1,0(a1)                                                            # test the store access
     nop                          
-    SMODE_ECALL                                                            # ecall to go to m mode
-
-pre_execute:
-
-    TEST_PROLOG(check_execute,CAUSE_FETCH_PAGE_FAULT)                      # load the addr and expected cause 
+    SMODE_ECALL                                                            # ecall to go to m mode 
 
 # -------------LEVEL 1 PTE Setup for execute test------------------------
-                                                                        # Setup a new PTE to test execute
+                                                                           # Setup a new PTE to test execute
     la a1,check_execute                                                    # loads the address of label vm_en
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_X )                          # sets the permission bits
+    ori a2, x0, (PTE_D | PTE_A | PTE_X | PTE_R | PTE_V | PTE_U )           # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
 
     SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
     la a1,check_execute                                                    # loads the address of check_execute
-    CHANGE_T0_U_MODE(a1)                                                 # changes mode M to U and set the MEPC
+    CHANGE_T0_U_MODE(a1)                                                   # changes mode M to U and set the MEPC
 
 
 check_execute:
    
     li t1, 0x45                                                            # page fault should raise 
+    ecall
     j exit
 
 trap_handler:
@@ -137,7 +127,7 @@ next_instr:
     mret                                                                   # return 
 
 
-RVTEST_EXIT_LOGIC                                                          # Exit logic 
+COREV_VERIF_EXIT_LOGIC                                                           # Exit logic 
 
 .data  
 .align 24                                                                  # Superpage align  

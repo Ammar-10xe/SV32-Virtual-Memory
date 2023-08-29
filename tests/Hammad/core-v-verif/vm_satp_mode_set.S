@@ -7,8 +7,8 @@
 # is selected by writing satp.mode=sv32 and reading back the satp/ This
 # covers the following scenarios in both supervisor and user privilege
 # modes for level1 PTE.
-#
-#
+#                           level 1
+#                   PTE setup with all permissions and satp access
 #=======================================================================
 
 #include "macros.h"
