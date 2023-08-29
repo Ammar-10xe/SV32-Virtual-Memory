@@ -31,6 +31,7 @@
 .global _start
 
 _start:
+
     ALL_MEM_PMP                                                            # PMP permission to all the memory
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
@@ -63,8 +64,10 @@ _start:
     #endif
 
 # ----------------Virtualization Enabeled-------------------------------
+
 vm_en:
-# ----------------------Load test prolog--------------------------------
+
+# ----------------Load test prolog--------------------------------------
     TEST_PROLOG(check_load,CAUSE_LOAD_PAGE_FAULT)                           # load the addr and expected cause 
     la a1, rvtest_data                                                      # loads the address of label rvtest_data
 
@@ -72,7 +75,7 @@ check_load:
 
     lw t1,0(a1)                                                             # tests the load access 
     TEST_STATUS                                                             # checks the status of the test
-# ----------------------store test prolog--------------------------------
+# ----------------Store test prolog--------------------------------------
     TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                         # load the addr and expected cause 
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
@@ -87,7 +90,6 @@ check_store:
     #endif
 # ----------------------Execute test prolog------------------------------
     TEST_PROLOG(check_execute,CAUSE_FETCH_PAGE_FAULT)                       # load the addr and expected cause 
-
 # -------------LEVEL 1 PTE Setup for execute test------------------------
                                                                             # Setup a new PTE to test execute
     la a1,check_execute                                                     # loads the address of label vm_en
