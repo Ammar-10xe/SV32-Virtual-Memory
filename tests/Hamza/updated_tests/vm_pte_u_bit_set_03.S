@@ -1,9 +1,10 @@
-#include "../../../macros1.h"
+#include "macros.h"
 #define _MMODE_  "M"
 #define _SUMODE_ "SU"
 
 .text
 .global _start
+.option norvc
 
 _start:
     ALL_MEM_PMP                                                            # PMP permission to all the memory
@@ -24,7 +25,7 @@ _start:
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_X | PTE_U )                  # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_X | PTE_U | PTE_R | PTE_W)                  # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
@@ -43,20 +44,11 @@ _start:
 vm_en:
 
     li t1,10                                                               
-    
-pre_load:
-
-    TEST_PROLOG(check_load,CAUSE_LOAD_PAGE_FAULT)                           # load the addr and expected cause 
     la a1, rvtest_data                                                      # loads the address of label rvtest_data
 
 check_load:
 
     lw t1,0(a1)                                                             # tests the load access 
-    nop
-
-pre_store:
-
-    TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                         # load the addr and expected cause 
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
 check_store:
@@ -64,15 +56,11 @@ check_store:
     nop                          
     SMODE_ECALL
 
-pre_execute:
-
-    TEST_PROLOG(check_execute,CAUSE_FETCH_PAGE_FAULT)                       # load the addr and expected cause 
-
 # -------------LEVEL 1 PTE Setup for execute test------------------------
                                                                             # Setup a new PTE to test execute
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1                                                               # VA = PA - Identity Map
-    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_U )                           # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_V | PTE_U )                           # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level0
 
 # ----------------Set the SATP and change the mode---------------------
@@ -83,6 +71,7 @@ pre_execute:
 check_execute:
    
     li t1, 0x45                                                             # page fault should raise 
+    ecall
     j exit
 
 trap_handler:
@@ -124,7 +113,7 @@ next_instr:
     mret                                                                   # return 
 
 
-RVTEST_EXIT_LOGIC                                                           # Exit logic 
+COREV_VERIF_EXIT_LOGIC                                                           # Exit logic 
 
 .data  
 .align                                                                     

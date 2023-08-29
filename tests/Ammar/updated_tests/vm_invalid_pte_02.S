@@ -72,20 +72,22 @@ _start:
 vm_en:
 
 # ----------------Load test prolog--------------------------------------
+
     TEST_PROLOG(check_load,CAUSE_LOAD_PAGE_FAULT)                           # load the addr and expected cause 
     la a1, rvtest_data                                                      # loads the address of label rvtest_data
 
 check_load:
 
     lw t1,0(a1)                                                             # tests the load access 
-    TEST_STATUS
+    TEST_STATUS                                                             # checks the status of the test
 # ----------------Store test prolog--------------------------------------
+
     TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                         # load the addr and expected cause 
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
 check_store:
     sw t1,0(a1)                                                             # test the store access
-    TEST_STATUS 
+    TEST_STATUS                                                             # checks the status of the test
 
     #ifdef smode
       SMODE_ECALL                                                           # changes mode M to S and set the MEPC
@@ -96,7 +98,7 @@ check_store:
 
     TEST_PROLOG(check_execute,CAUSE_FETCH_PAGE_FAULT)                       # load the addr and expected cause 
 
-# -------------LEVEL 1 PTE Setup for execute test------------------------
+# -------------LEVEL 0 PTE Setup for execute test------------------------
                                                                             # Setup a new PTE to test execute
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1                                                               # VA = PA - Identity Map
@@ -117,8 +119,8 @@ check_store:
 check_execute:
    
     li t1, 0x45                                                             # page fault should raise 
-    TEST_STATUS                                                             # checks the status of the test                                                               
-
+    TEST_STATUS                                                             # checks the status of the test
+    
 test_pass:
 
     li x1, 0                                                                # Write 0 in x1 if test pass

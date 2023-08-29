@@ -74,9 +74,7 @@ vm_en:
 check_load:                                                             # test the load access
 
     lw t1,0(a1)  
-    la a1, rvtest_check                                                 # load the addr of rvtest_check
-    lw t1, 0(a1)                                                        # load value to check if expected exception is handled
-    bne t1, x0, test_fail                                               # If exception is expected but not handled then jump to test_fail
+    TEST_STATUS                                                             # checks the status of the test
     nop
 
 # -------------------Store Test Prolog------------------------
@@ -86,9 +84,7 @@ check_load:                                                             # test t
 check_store:                                                            # test the store access
     sw t1,0(a1)
     nop          
-    la a1, rvtest_check                                                 # load the addr of rvtest_check
-    lw t1, 0(a1)                                                        # load value to check if expected exception is handled
-    bne t1, x0, test_fail                                               # If exception is expected but not handled then jump to test_fail             
+    TEST_STATUS                                                         # checks the status of the test           
     #ifdef smode
         SMODE_ECALL                                                     # SMODE ecall 
     #else
@@ -121,9 +117,7 @@ PTE_LEVEL1_SUPERVISOR_EXECUTE:
 
 check_execute:                                                          # test the execute access
     li t1, 0x45                                                         # page fault should raise
-    la a1, rvtest_check                                                 # load the addr of rvtest_check
-    lw t1, 0(a1)                                                        # load value to check if expected exception is handled
-    bne t1, x0, test_fail                                               # If exception is expected but not handled then jump to test_fail
+    TEST_STATUS                                                             # checks the status of the test
     j test_pass
 
 trap_handler:
