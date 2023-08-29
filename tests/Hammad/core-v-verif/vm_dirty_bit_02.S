@@ -1,5 +1,5 @@
 #=======================================================================
-#      Write Access of Level1 PTE in User and Supervisor mode when dirty
+#      Write Access of Level0 PTE in User and Supervisor mode when dirty
 #      bit is low  
 #-----------------------------------------------------------------------
 # Test Description:
@@ -8,9 +8,9 @@
 # raise Store/AMO page fault exception, this test
 # covers the following scenarios in both supervisor and user privilege
 # modes for level0 PTE.
-#
-#  Set PTE.D = 0 and test the write access in Supervisor Mode
-#  Set PTE.D = 0 and test the write access in User Mode
+#                           Level 0
+# - Set PTE.D = 0 and test the write access in Supervisor Mode
+# - Set PTE.D = 0 and test the write access in User Mode
 #
 #=======================================================================
 
@@ -78,6 +78,11 @@ pre_store:
 
 check_store:
     sw t1,0(a1)                                                             # test the store access
+    #ifdef smode
+        SMODE_ECALL                                                         # SMODE ecall 
+    #else
+        UMODE_ECALL                                                         # UMODE ecall 
+    #endif	
 	j exit
 	
 trap_handler:
