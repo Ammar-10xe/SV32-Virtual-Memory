@@ -9,7 +9,7 @@
 #                      access fault exception.                                                    #
 ###################################################################################################
 
-#include "../../macros1.h"
+#include "macros.h"
 
 #define NAPOT_RANGE_4KB 0x1FF                                           # Set 4kB range with NAPOT
 #define NAPOT_RANGE_32B 0x3                                             # Set 32B range with NAPOT
