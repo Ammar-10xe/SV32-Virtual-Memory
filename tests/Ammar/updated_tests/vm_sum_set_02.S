@@ -77,7 +77,6 @@ check_store:
 
     sw t1,0(a1)                                                             # test the store access
     SMODE_ECALL                                                             # SMODE ecall 
-
       
 # ----------------------Execute test prolog------------------------------
 
