@@ -98,7 +98,7 @@ check_store:
 
     TEST_PROLOG(check_execute,CAUSE_FETCH_PAGE_FAULT)                       # load the addr and expected cause 
 
-# -------------LEVEL 1 PTE Setup for execute test------------------------
+# -------------LEVEL 0 PTE Setup for execute test------------------------
                                                                             # Setup a new PTE to test execute
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1                                                               # VA = PA - Identity Map

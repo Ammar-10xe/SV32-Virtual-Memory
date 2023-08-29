@@ -1,16 +1,16 @@
 #=======================================================================
 #      RWX Access of Level0 PTE in User and Supervisor mode when
-#      Non Lead PTE persmissions at Level 0  
+#      Non-Leaf PTE persmissions at Level 0  
 #-----------------------------------------------------------------------
 # Test Description:
 # If PTE at level0 has non-leaf RWX permissions (pte.x=0 & pte.r=0 & pte.w=0), 
 # then accessing it would raise page fault exception of the corresponding
 # access type. This test
 # covers the following scenarios in both supervisor and user privilege
-# modes for level1 PTE.
-#
-#  Set PTE.R = 0 and PTE.W = 1 and PTE.X = 0 test the RWX access in SMode
-#  Set PTE.R = 0 and PTE.W = 1 and PTE.X = 0 test the RWX access in UMode
+# modes for level0 PTE.
+#                            Level 0
+#  Set PTE.R = 0 and PTE.W = 0 and PTE.X = 0 test the RWX access in SMode
+#  Set PTE.R = 0 and PTE.W = 0 and PTE.X = 0 test the RWX access in UMode
 #
 #=======================================================================
 
