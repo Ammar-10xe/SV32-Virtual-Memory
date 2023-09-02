@@ -1,5 +1,5 @@
 #=======================================================================
-#  RWX Access of PTE with no PMP of PTE Permissions Test on Level 1 PTE
+#  RWX Access of PTE with no PMP of PTE Permissions Test on Level 0 PTE
 #-----------------------------------------------------------------------
 # Test Description:
 #
@@ -7,7 +7,7 @@
 # raise access fault exception of the corresponding access type. 
 # When satp.mode=sv32 and PMP have no (r,w,x) PMP permissions, then this test
 # covers the following scenarios in both supervisor and user privilege
-# modes for level 1 PTE.
+# modes for level 0 PTE.
 #
 # - Set PMP.R = 0 for PTE and test the read access.
 # - Set PMP.X = 0 for PTE and test the execute access.
@@ -58,7 +58,7 @@ _start:
     csrw pmpaddr2, t2                                                   # Region 3 for the pmp permission
     sfence.vma
 
-    la t2, pgtb_l1                                                      # loads the base address of rvtest_data label        
+    la t2, pgtb_l0                                                      # loads the base address of rvtest_data label        
     srli t2, t2, PMP_SHIFT                                              # Right shift the address of rvtest_data label by PMP_Shift(2)
     ori t2, t2, NAPOT_RANGE_32B                                         # Selects the range of 32B    
     csrw pmpaddr3, t2                                                   # Region 4 for the pmp permission
@@ -81,7 +81,8 @@ _start:
 
     la t1,trap_handler                                                  # loads the address of trap handler 
     csrw mtvec,t1                                                       # sets the mtvec to trap handler 
-PTE_LEVEL1:
+    
+PTE_LEVEL1_SUPERVISOR:
 
 # ----------------LEVEL 1 PTE Setup for load and store test---------------------
 
@@ -100,6 +101,11 @@ PTE_LEVEL1:
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_R | PTE_V)    # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                     # setup the PTE for level1
 
+# ----------------LEVEL 0 PTE Setup for load and store test---------------------
+    la a1,vm_en                                                         # loads the address of label vm_en
+    mv a0, a1                                                           # VA = PA - Identity Map
+    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                     # setup the PTE for level1
 # ----------------Set the SATP and change the mode---------------------
 
 
@@ -118,7 +124,7 @@ vm_en:
 # ----------------Load test prolog--------------------------------------
 
     TEST_PROLOG(check_load, CAUSE_LOAD_ACCESS)                          # load the addr and expected cause
-    la a1, pgtb_l1                                                      # load base address of PGTB Level 1 for load access test
+    la a1, pgtb_l0                                                      # load base address of PGTB Level 1 for load access test
 
 check_load:                                                             # test the load access
 
@@ -129,7 +135,7 @@ check_load:                                                             # test t
                                                     
 
     TEST_PROLOG(check_store, CAUSE_STORE_ACCESS)                        # load the addr and expected cause
-    la a1, pgtb_l1                                                      # load base address of PGBTB Level 1 for store access test
+    la a1, pgtb_l0                                                      # load base address of PGBTB Level 1 for store access test
 
 check_store:                                                            # test the store access
     sw t1,0(a1)
@@ -142,17 +148,20 @@ check_store:                                                            # test t
     #endif
 
 # ----------------------Setting PMP Permissions for Region 2------------------------------
+    la a1,pgtb_l0                                                       # loads the address of label vm_en
+    mv a0, a1                                                           # VA = PA - Identity Map
+    ori a2, x0, ( PTE_V )   # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                     # setup the PTE for level1
 
-
-    la t2, pgtb_l1                                                      # loads the base address of level1 4kbpage table 
+    la t2, pgtb_l0                                                      # loads the base address of level1 4kbpage table 
     srli t2, t2, PMP_SHIFT                                              # Right shift the address of level 1 page table  by PMP_Shift(2)
     ori t2, t2, NAPOT_RANGE_4KB                                         # Selects the range of 4kB
-    csrw pmpaddr1, t2                                                   # Region 2 for the pmp permission
+    csrw pmpaddr3, t2                                                   # Region 2 for the pmp permission
     sfence.vma
 
-    li t2, ((PMP_NAPOT | PMP_X | PMP_W | PMP_R) << 8)
+    li t2, ((PMP_NAPOT | PMP_X | PMP_W | PMP_R) << 24)
     csrc pmpcfg0, t2                                                    # Clear PMP Regions Configration
-    li t2, ((PMP_NAPOT | PMP_W | PMP_R) << 8)
+    li t2, ((PMP_NAPOT | PMP_W | PMP_R) << 24)
     csrs pmpcfg0, t2                                                    # Write PMP Regions Configration
     sfence.vma
 
@@ -250,3 +259,9 @@ COREV_VERIF_EXIT_LOGIC                                                  # Exit l
 
 .align 4; .global tohost;   tohost:   .dword 0;
 .align 4; .global fromhost; fromhost: .dword 0;
+
+
+
+
+
+

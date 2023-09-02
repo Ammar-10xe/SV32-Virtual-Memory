@@ -73,7 +73,7 @@ _start:
     la t1,trap_handler                                                  # loads the address of trap handler 
     csrw mtvec,t1                                                       # sets the mtvec to trap handler 
     
-PTE_LEVEL1_SUPERVISOR:
+PTE_LEVEL1:
 
 # ----------------LEVEL 1 PTE Setup for load and store test---------------------
 
