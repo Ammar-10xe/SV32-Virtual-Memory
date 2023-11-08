@@ -1,109 +1,87 @@
 #=======================================================================
-# SATP mode = Bare for Level 1 PTE 
+# RWX access on S-mode pages in S-mode for level1 PTE when pte.r=1, 
+# pte.w=1, pte.x=1 
 #-----------------------------------------------------------------------
 # Test Description:
 #
-# If PTE does not have the SATP setuped then, accessing it
-# would raise a ILLEGAL_INSTRUCTION fault exception.
-# When satp.mode=Bare and PTE has (r,w,x) PMP permissions, this test
-# covers the following scenarios in both supervisor and user privilege
-# modes for level 1 PTE.
-#
-# Set SATP = Bare and rest bits to zeros and test the access to PTE.
+# If PTE belongs to supervisor mode i.e. its U permission bit is clear
+# (pte.u = 0), then accessing that PTE in supervisor mode should be
+# successful if the corresponding (r,w,x) permission of PTE is granted.
+# Otherwise raise page fault exception of the corresponding access type.
+# 
+# When satp.mode=sv32, PTE has (r,w,x) PMP permissions, PTE has 
+# non-reserved RWX encoding, pte.u=0 and pte.v=1, then test the 
+# following in supervisor privilege mode for level 0 and level 1 PTE.
+# 
+# - Test the read access for pte.r=1 
+# - Test the write access for pte.w=1
+# - Test the execute access for pte.x=1 
+# 
 #=======================================================================
 
-#include "../../../macros1.h"
-
-#ifdef smode
-    #define SET_PTE_U 0
-#else
-    #define SET_PTE_U PTE_U
-#endif
-
-#define _MMODE_  "M"
+#include "macros.h"
+#define _MMODE_ "M"
 #define _SUMODE_ "SU"
-.set va, 0x82000000
 
 .text
 .global _start
 
 _start:
-
     ALL_MEM_PMP                                                            # PMP permission to all the memory
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
     
-# ----------------LEVEL 1 PTE Setup for load and store test------------
+# --------LEVEL 1 PTE Setup for load and store and execute access-------
 
     la a1,vm_en                                                             # loads the address of label vm_en
     mv a0, a1                                                               # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V )               # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_V )                           # sets the permission bits
     PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l1, LEVEL1 )                      # setup the PTE for level1
  
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
     mv a0, a1                                                               # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_V)                                # sets the permission bits
+    ori a2, x0,( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V)                     # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1   
 
     la a1,rvtest_check                                                      # loads the address of label rvtest_data
     mv a0, a1                                                               # set the VA to PA (identity mapping)                                          
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_W | PTE_R | PTE_V )       # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V )                   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode----------------------
 
+    SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
     la a1,vm_en                                                             # loads the address of vm_en
-    #ifdef smode																													 
-        CHANGE_T0_S_MODE(a1)                                        	   # changes mode M to S and set the MEPC value to a1
-    #else
-        CHANGE_T0_U_MODE(a1)                                        	   # changes mode M to U and set the MEPC value to a1
-    #endif
+																													 
+    CHANGE_T0_S_MODE(a1)                                        	         # changes mode M to S and set the MEPC value to a1
 
 # ----------------Virtualization Enabeled-------------------------------
-
 vm_en:
 
-
-check_load:
-
-    lw t1,0(a1)                                                             # tests the load access                                                             # checks the status of the test
+    la a1, rvtest_data                                                      # loads the address of label rvtest_data
 
 check_store:
 
-    sw t1,0(a1)                                                             # test the store access                                                            # checks the status of the test                
-                                                                           
-    #ifdef smode
-      SMODE_ECALL                                                           # changes mode M to S and set the MEPC
-    #else
-     UMODE_ECALL                                                            # changes mode M to U and set the MEPC
-    #endif    
-# ----------------------Access test prolog------------------------------                                               
+    sw t1,0(a1)                                                             # test the store access
+        
+check_load:
 
-    TEST_PROLOG(va,CAUSE_ILLEGAL_INSTRUCTION)                               # load the addr and expected cause 
+    lw t1,0(a1)                                                             # tests the load access 
 
-# -------------LEVEL 1 PTE Setup for execute test------------------------
-                                                                           # Setup a new PTE to test execute
-    la a1,check_access                                                     # loads the address of label vm_en
-    la a0, va                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V )              # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
+check_execute:
+   
+    li t1, 0x45                                                             # test the execute access
+    SMODE_ECALL                                                             # ecall to go back to M mode
 
-# ----------------Set the SATP to Bare_Mode and change the mode---------------------
+test_pass:
 
-    csrw satp, x0           	                                           # Write satp with all zeros (bare mode)
-    la a1 , va                                                             # loads the virual address of check_access
-    #ifdef smode
-      CHANGE_T0_S_MODE(a1)                                                 # changes mode M to S and set the MEPC
-    #else
-      CHANGE_T0_U_MODE(a1)                                                 # changes mode M to U and set the MEPC
-    #endif
+    li x1, 0                                                                # Write 0 in x1 if test pass
+    j exit                                                                  # Jump to exit
 
+test_fail:
 
-check_access:                                                              # check access to PTE first with va then with physical address
-
-    li t1, 0x45                                                             
-    TEST_STATUS                                                             # checks the status of the test
-    j test_pass                                                             # Jump to exit
+    li x1, 1                                                                # Write 1 in x1 if test failed
+    j exit                                                                  # Jump to exit
                                                                    
 trap_handler:
 
@@ -117,18 +95,12 @@ trap_handler:
     li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
     beq t0,t1,continue_in_m_mode                                            # checks if ecall is occured
 
-    li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
-    beq t0,t1,continue_in_m_mode                                            # checks for ecall is occured
-
     beqz t2, test_fail                                                      # Jumps to exit if cause is not expected
  
     csrr t5,mepc                                                            # read the value of mepc 
     bne t3,t5,test_fail                                                     # check the value of mepc with it's expected value
     
     bne  t0, t4, test_fail                                                  # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
-
-    li t5, CAUSE_ILLEGAL_INSTRUCTION                                        # load the value of illegal instruction fault 
-    beq t0,t5,Back_to_check_access                                          # if illegal instruction fault jump to check access in M mod
 
 continue_execution:
 
@@ -150,25 +122,7 @@ trap_epilogs:
     sw t2, 8(t1)                                                            # Clear cause execution number
     mret
 
-Back_to_check_access:
-    la t3,check_access                                                      # loads the address of check_access
-    csrw mepc,t3                                                            # update the value of mepc with check_access address
-    li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
-    csrs mstatus,t1                                                         # update the value mstatus MPP 
-    mret                                                                    # return
-
-
-test_pass:
-
-    li x1, 0                                                                # Write 0 in x1 if test pass
-    j exit                                                                  # Jump to exit
-
-test_fail:
-
-    li x1, 1                                                                # Write 1 in x1 if test failed
-    j exit
-    
-COREV_VERIF_EXIT_LOGIC                                                      # Exit logic 
+COREV_VERIF_EXIT_LOGIC                                                      # exit logic 
 
 .data  
 .align 24                                                                   # Superpage align  

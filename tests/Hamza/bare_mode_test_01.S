@@ -1,5 +1,5 @@
 #=======================================================================
-#   🌟 SATP mode =Bare for Level1 PTE 🌟
+#    SATP mode =Bare for Level1 PTE 
 #-----------------------------------------------------------------------
 # Test Description:
 #
@@ -9,7 +9,7 @@
 # covers the following scenarios in both supervisor and user privilege
 # modes for level1 PTE.
 #
-# 💫 Set SATP = Bare and rest bits to zeros and test the access to PTE.
+# Set SATP = Bare and rest bits to zeros and test the access to PTE.
 #=======================================================================
 
 #include "../../../macros1.h"

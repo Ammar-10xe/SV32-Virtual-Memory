@@ -1,6 +1,6 @@
 #=======================================================================
 #  PMP permissions on Physical Address in User and supervisor mode
-#  at level 1 PTE
+#  at level 0 PTE
 #-----------------------------------------------------------------------
 # Test Description:
 #
@@ -18,7 +18,7 @@
 #
 #=======================================================================
 
-#include "../../../macros1.h"
+#include "macros.h"
 
 #define NAPOT_RANGE_4KB 0x1FF                                           # Set 4kB range with NAPOT
 #define NAPOT_RANGE_32B 0x3                                             # Set 32B range with NAPOT
@@ -46,54 +46,65 @@ _start:
     csrw pmpaddr0, t2                                                   # Region 1 for the pmp permissions
     sfence.vma  
 
-    la t2, pgtb_l1                                                      # loads the base address of level1 4kbpage table                 
-    srli t2, t2, PMP_SHIFT                                              # Right shift the address of level 1 page table  by PMP_Shift(2)
-    ori t2, t2, NAPOT_RANGE_4KB                                         # Selects the range of 8kB
+    la t2, pgtb_l1                                                      # loads the base address of LEVEL1 4kbpage table                 
+    srli t2, t2, PMP_SHIFT                                              # Right shift the address of LEVEL 1 page table  by PMP_Shift(2)		
+    ori t2, t2, NAPOT_RANGE_4KB                                         # Selects the range of 4kB						 	 										
     csrw pmpaddr1, t2                                                   # Region 2 for the pmp permission
     sfence.vma
 
-    la t2, rvtest_check                                                 # loads the base address of rvtest_check label        
+    la t2, pgtb_l0                                                      # loads the base address of LEVEL0 4kbpage table                 
+    srli t2, t2, PMP_SHIFT                                              # Right shift the address of LEVEL 0 page table  by PMP_Shift(2)		
+    ori t2, t2, NAPOT_RANGE_4KB                                         # Selects the range of 4kB						 	 										
+    csrw pmpaddr4, t2                                                   # Region 3 for the pmp permission
+    sfence.vma
+
+    la t2, rvtest_check                                                 # loads the base address of rvtest_data label        
     srli t2, t2, PMP_SHIFT                                              # Right shift the address of rvtest_data label by PMP_Shift(2)
     ori t2, t2, NAPOT_RANGE_32B                                         # Selects the range of 32B    
-    csrw pmpaddr2, t2                                                   # Region 3 for the pmp permission
+	csrw pmpaddr2, t2                                               # Region 4 for the pmp permission
     sfence.vma
 
     la t2, rvtest_data                                                  # loads the base address of rvtest_data label        
     srli t2, t2, PMP_SHIFT                                              # Right shift the address of rvtest_data label by PMP_Shift(2)
     ori t2, t2, NAPOT_RANGE_32B                                         # Selects the range of 32B    
-	csrw pmpaddr3, t2                                               # Region 4 for the pmp permission
+	csrw pmpaddr3, t2                                               # Region 5 for the pmp permission
     sfence.vma
 
-    # Region 1, 2, 3: NAPOT with RWX PMP Permissions
-    # Region 4:     : NAPOT with X PMP Permission only
+    # Region 1, 2, 3, 4: NAPOT with RWX PMP Permissions
     li t2, ((PMP_NAPOT | PMP_X) << 24) | ((PMP_NAPOT | PMP_X | PMP_W | PMP_R) << 16) | ((PMP_NAPOT | PMP_X | PMP_W | PMP_R) << 8) | (PMP_NAPOT | PMP_X | PMP_W | PMP_R)
     csrw pmpcfg0, t2                                                    # Write PMP Regions Configration
+    li t2, (PMP_NAPOT | PMP_X | PMP_W | PMP_R)                          # Region5: NAPOT with RWX PMP Permissions
+    csrw pmpcfg1, t2                                                    # Write PMP Regions Configration
     sfence.vma
 
     la t1,trap_handler                                                  # loads the address of trap handler 
     csrw mtvec,t1                                                       # sets the mtvec to trap handler 
     
-PTE_LEVEL1:
+PTE_LEVEL0:
 
-# ----------------LEVEL 1 PTE Setup for load and store test---------------------
+# ----------------LEVEL 0 PTE Setup for load and store test---------------------
+
+    la a1,pgtb_l0                                                       # loads the address of label pgtb_l0
+    la a0, _start                                                       # VA = PA - Identity Map
+    ori a2, x0, ( PTE_V )                                               # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                     # setup the PTE for level1
 
     la a1,vm_en                                                         # loads the address of label vm_en
     mv a0, a1                                                           # VA = PA - Identity Map
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                     # setup the PTE for level1
+    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V )           # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                     # setup the PTE for level0
  
     la a1,rvtest_data                                                   # loads the address of label rvtest_data
     mv a0, a1                                                           # VA = PA - Identity Map
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                     # setup the PTE for level1   
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                     # setup the PTE for level0   
 
     la a1,rvtest_check                                                  # loads the address of label rvtest_data
     mv a0, a1                                                           # VA = PA - Identity Map                                         
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_R | PTE_V)    # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                     # setup the PTE for level1
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                     # setup the PTE for level0
 
 # ----------------Set the SATP and change the mode---------------------
-
 
     SATP_SETUP_SV32(pgtb_l1)                                            # set the SATP for virtualization
     la a1,vm_en                                                         # loads the address of vm_en 
@@ -163,10 +174,10 @@ trap_handler:
     lw t4, 8(t1)                                                        # load the expected value of mcause
 
     li  t1, CAUSE_SUPERVISOR_ECALL                                      # load the value of supervisor ecall
-    beq t0,t1,next_instr                                                # checks if ecall is occured
+    beq t0,t1,continue_in_m_mode                                        # checks if ecall is occured
 
     li  t1, CAUSE_USER_ECALL                                            # load the value of user ecall
-    beq t0,t1,next_instr                                                # checks for ecall is occured
+    beq t0,t1,continue_in_m_mode                                        # checks for ecall is occured
 
     beqz t2, test_fail                                                  # Jumps to exit if cause is not expected
     csrr t5,mepc                                                        # read the value of mepc
@@ -175,14 +186,14 @@ trap_handler:
     bne t0, t4, test_fail                                               # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
     li t5, CAUSE_FETCH_ACCESS                                           # load the value of fetch access fault
-    beq t0, t5, next_instr                                              # if fetch access fault jump to next instr in M mode
+    beq t0, t5, continue_in_m_mode                                      # if fetch access fault jump to next instr in M mode
 
 continue_execution:
 
     INCREMENT_MEPC   _SUMODE_                                           # update the value of mepc
     j trap_epilogs
 
-next_instr:
+continue_in_m_mode:
 
     INCREMENT_MEPC   _MMODE_                                            # update the value of mepc
     li t1,MSTATUS_MPP                                                   # update the MPP to MSTATUS_MPP for M mode
@@ -205,19 +216,18 @@ test_fail:
 
 COREV_VERIF_EXIT_LOGIC                                                  # Exit logic 
 
-.data  
-.align 24
-    rvtest_check: 
+.data
+rvtest_check: 
 
-        .word 0xdeadbeef                                                # 1 for cause expected 0  for no cause 
-        .word 0xbeefdead                                                # write the value of mepc here (where  cause is expected)
-        .word 0xcafecafe                                                # write the value of expect cause 
-.align 22                                     
-    rvtest_data:   
-        .word 0xbeefcafe                                                 
-        .word 0xdeadcafe                                                 
-        .word 0x00000000                                                 
-        .word 0x00000000  
+    .word 0xdeadbeef                                                    # 1 for cause expected 0  for no cause 
+    .word 0xbeefdead                                                    # write the value of mepc here (where  cause is expected)
+    .word 0xcafecafe                                                    # write the value of expect cause 
+.align 12                                     
+rvtest_data:   
+    .word 0xbeefcafe                                                 
+    .word 0xdeadcafe                                                 
+    .word 0x00000000                                                 
+    .word 0x00000000  
 .align 12                                                      
     pgtb_l1:                                                       
         .zero 4096                                                 
